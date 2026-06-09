@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # No database needed — runs in parallel with `database`.
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm before setup-node so the node cache can resolve the pnpm store. Reads the pinned
+      # version from package.json "packageManager" (pnpm 11 — required so allowBuilds is honored).
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # postinstall runs `prisma generate`; native build scripts are allow-listed in
+      # pnpm-workspace.yaml (pnpm 11 blocks them otherwise -> ERR_PNPM_IGNORED_BUILDS).
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  # Migrations + schema-drift guard, against a real Postgres. Parallel with `checks`.
+  database:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: evon
+          POSTGRES_PASSWORD: evon
+          POSTGRES_DB: evon
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U evon -d evon"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Both point to the same DB locally and in CI (Neon splits pooled vs direct in prod only).
+      DATABASE_URL: postgresql://evon:evon@localhost:5432/evon?schema=public
+      DIRECT_URL: postgresql://evon:evon@localhost:5432/evon?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Apply every migration to a fresh DB — fails if a migration is broken or out of order.
+      - name: Migrate (deploy)
+        run: pnpm prisma migrate deploy
+
+      # Drift guard: compare the migrated DB against schema.prisma. Exits non-zero if they differ
+      # (i.e. someone edited the schema without committing a matching migration).
+      - name: Schema drift check
+        run: >-
+          pnpm prisma migrate diff
+          --from-url "$DATABASE_URL"
+          --to-schema-datamodel prisma/schema.prisma
+          --exit-code

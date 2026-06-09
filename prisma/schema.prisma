@@ -1,0 +1,292 @@
+// Evon — Prisma schema. See CLAUDE.md (Data model) and CONTEXT.md (glossary).
+// Conventions: cuid ids, snake_case tables/columns via @@map/@map, timestamptz everywhere,
+// money/kWh/price as NUMERIC (never float). Money handled in code as Prisma.Decimal (ADR 0002).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled connection for queries (Neon pooled URL).
+  url       = env("DATABASE_URL")
+  // Direct connection for migrations (Neon direct URL).
+  directUrl = env("DIRECT_URL")
+}
+
+// Smart-breaker cloud provider. shelly is the only MVP implementation; tuya/ewelink are V2.
+enum Provider {
+  shelly
+  tuya
+  ewelink
+}
+
+// Billing period lifecycle. See docs/adr/0001-billing-period-state-machine.md.
+enum PeriodStatus {
+  open
+  processing
+  pending_review
+  approved
+  exported
+  failed
+}
+
+// ---------------------------------------------------------------------------
+// Tenant root + configuration
+// ---------------------------------------------------------------------------
+
+// Building admin (es: administrador): Evon's paying customer and the tenant root.
+// For the MVP one row = one customer = one login.
+model BuildingAdmin {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String
+  // TODO(evon): credential storage/hashing is undecided — see CLAUDE.md "Auth" and the
+  // authorize() stub in src/infra/auth/config.ts. Nullable until that lands.
+  passwordHash String? @map("password_hash")
+
+  buildings Building[]
+  auditLogs AuditLog[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("building_admins")
+}
+
+// Building (es: consorcio): a horizontal-property building.
+model Building {
+  id              String        @id @default(cuid())
+  buildingAdminId String        @map("building_admin_id")
+  buildingAdmin   BuildingAdmin @relation(fields: [buildingAdminId], references: [id], onDelete: Cascade)
+
+  name    String
+  address String?
+  // Electricity utility (EDESUR / EDENOR). Free string, not an enum, to avoid a migration when
+  // a new distribuidora appears. See CONTEXT.md.
+  distribuidora String
+  // Export profile key for this building's expensas software. MVP only ships "generic".
+  // TODO(evon): per-software CSV profiles — see CLAUDE.md "CSV format".
+  exportProfile String @default("generic") @map("export_profile")
+  timezone      String @default("America/Argentina/Buenos_Aires")
+
+  units            Unit[]
+  cloudConnections CloudConnection[]
+  billingPeriods   BillingPeriod[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([buildingAdminId])
+  @@map("buildings")
+}
+
+// Unit (es: unidad funcional): an individually-owned space (parking spot) that gets billed.
+model Unit {
+  id         String   @id @default(cuid())
+  buildingId String   @map("building_id")
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  label     String // e.g. "Cochera 12"
+  ownerName String? @map("owner_name")
+  // Identifier of this unit in the admin's expensas software, used to match CSV rows.
+  // TODO(evon): confirm the matching key with the pilot — see CLAUDE.md "CSV format".
+  externalRef String? @map("external_ref")
+
+  meterDevices MeterDevice[]
+  billingLines BillingLine[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([buildingId])
+  @@map("units")
+}
+
+// A cloud account for a manufacturer (e.g. one Shelly account) scoped to a building.
+model CloudConnection {
+  id         String   @id @default(cuid())
+  buildingId String   @map("building_id")
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  provider Provider
+  label    String?
+  // AES-256-GCM ciphertext of the cloud credentials. NEVER plaintext, NEVER committed.
+  // Encrypted/decrypted in src/infra/crypto with a key from env. See CLAUDE.md "Cloud credentials".
+  encryptedCredentials Bytes @map("encrypted_credentials")
+
+  meterDevices MeterDevice[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([buildingId])
+  @@map("cloud_connections")
+}
+
+// Smart breaker (disyuntor inteligente): one WiFi meter per parking spot.
+model MeterDevice {
+  id           String          @id @default(cuid())
+  unitId       String          @map("unit_id")
+  unit         Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  connectionId String          @map("connection_id")
+  connection   CloudConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // The id used to address this device in the provider's cloud API.
+  providerDeviceId String  @map("provider_device_id")
+  label            String?
+
+  readings MeterReading[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([connectionId, providerDeviceId])
+  @@index([unitId])
+  @@map("meter_devices")
+}
+
+// Tariff: per-kWh price effective from a date, keyed by distribuidora. NOT owned by a building.
+model Tariff {
+  id            String   @id @default(cuid())
+  distribuidora String
+  pricePerKwh   Decimal  @map("price_per_kwh") @db.Decimal(12, 6)
+  // TODO(evon): margin = 0 for the MVP. VAT / surcharges / fixed charge are undecided — see
+  // CLAUDE.md "Detailed tariff rules".
+  margin        Decimal  @default(0) @db.Decimal(12, 6)
+  effectiveFrom DateTime @map("effective_from") @db.Timestamptz
+
+  billingLines BillingLine[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([distribuidora, effectiveFrom])
+  @@map("tariffs")
+}
+
+// ---------------------------------------------------------------------------
+// Monthly cycle
+// ---------------------------------------------------------------------------
+
+// Billing period: one month's cycle for one building. See ADR 0001 for the state machine.
+model BillingPeriod {
+  id         String   @id @default(cuid())
+  buildingId String   @map("building_id")
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  year   Int
+  month  Int // 1-12
+  status PeriodStatus @default(open)
+
+  periodStart DateTime  @map("period_start") @db.Timestamptz
+  periodEnd   DateTime  @map("period_end") @db.Timestamptz
+  processedAt DateTime? @map("processed_at") @db.Timestamptz
+  approvedAt  DateTime? @map("approved_at") @db.Timestamptz
+  // Last failure message when status = failed.
+  error       String?
+
+  readings     MeterReading[]
+  billingLines BillingLine[]
+  outputFiles  OutputFile[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([buildingId, year, month])
+  @@index([status])
+  @@map("billing_periods")
+}
+
+// Reading: the consumption attributed to one smart breaker for one billing period.
+model MeterReading {
+  id       String        @id @default(cuid())
+  periodId String        @map("period_id")
+  period   BillingPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  deviceId String        @map("device_id")
+  device   MeterDevice   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // The kWh the biller uses. Always populated.
+  kwhConsumed Decimal @map("kwh_consumed") @db.Decimal(12, 3)
+  // Raw cumulative counters — populated only if Shelly turns out to be a cumulative counter.
+  // TODO(evon): cumulative vs interval is unconfirmed — see CLAUDE.md "Shelly API shape".
+  counterStart Decimal? @map("counter_start") @db.Decimal(14, 3)
+  counterEnd   Decimal? @map("counter_end") @db.Decimal(14, 3)
+
+  // The cloud's raw response, kept verbatim for traceability / amount reconstruction.
+  rawPayload Json     @map("raw_payload")
+  readAt     DateTime @map("read_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([periodId, deviceId])
+  @@index([deviceId])
+  @@map("meter_readings")
+}
+
+// Billing line: the per-unit charge produced for a period (one per unit, including units at $0).
+model BillingLine {
+  id       String        @id @default(cuid())
+  periodId String        @map("period_id")
+  period   BillingPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  unitId   String        @map("unit_id")
+  unit     Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  // TODO(evon): final concept wording per the pilot's statement.
+  concept String  @default("Carga vehiculo electrico")
+  kwh     Decimal @db.Decimal(12, 3)
+  // Tariff actually applied, kept for traceability (reconstruct amount from raw reading + this).
+  pricePerKwh Decimal @map("price_per_kwh") @db.Decimal(12, 6)
+  // Final per-unit total: rounded HALF_UP to 2dp (the ONLY rounding step). See CLAUDE.md.
+  amount   Decimal @db.Decimal(12, 2)
+  detail   String?
+  tariffId String? @map("tariff_id")
+  tariff   Tariff? @relation(fields: [tariffId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([periodId, unitId])
+  @@index([unitId])
+  @@map("billing_lines")
+}
+
+// ---------------------------------------------------------------------------
+// Peripheral
+// ---------------------------------------------------------------------------
+
+// A generated artifact (CSV or per-unit PDF) stored in R2 for a period.
+model OutputFile {
+  id       String        @id @default(cuid())
+  periodId String        @map("period_id")
+  period   BillingPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  kind        String // "csv" | "pdf"
+  profile     String // export profile used (csv)
+  storageKey  String  @map("storage_key") // R2 object key
+  contentType String? @map("content_type")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([periodId])
+  @@map("output_files")
+}
+
+// Append-only audit trail. Every billed amount must be reconstructible (CLAUDE.md "Traceability").
+model AuditLog {
+  id String @id @default(cuid())
+  // Actor; null for system/cron actions.
+  buildingAdminId String?        @map("building_admin_id")
+  actor           BuildingAdmin? @relation(fields: [buildingAdminId], references: [id], onDelete: SetNull)
+
+  action     String
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id")
+  metadata   Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([entityType, entityId])
+  @@index([buildingAdminId])
+  @@map("audit_log")
+}

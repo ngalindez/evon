@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: evon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evon
+      POSTGRES_PASSWORD: evon
+      POSTGRES_DB: evon
+    ports:
+      - "5432:5432"
+    volumes:
+      - evon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evon -d evon"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  evon_pgdata:
