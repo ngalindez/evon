@@ -1,0 +1,257 @@
+'use client'
+import { Badge } from '@/components/ds/Badge'
+import { Button } from '@/components/ds/Button'
+import { Card } from '@/components/ds/Card'
+import { Tag } from '@/components/ds/Tag'
+import { fmtMoney, fmtNum } from '@/lib/format'
+import { roundUnitTotal } from '@/lib/money'
+import type { PeriodReview } from '@/server/billing'
+import { Prisma } from '@prisma/client'
+import { Check, CheckCircle2, Cpu, Download, FunctionSquare } from 'lucide-react'
+import { useMemo, useState } from 'react'
+
+const MARGIN_OPTIONS = [0, 0.05, 0.08, 0.12] as const
+const Decimal = Prisma.Decimal
+
+const STATUS_LABEL: Record<NonNullable<PeriodReview['period']>['status'], string> = {
+  open: 'Abierto',
+  processing: 'Procesando',
+  pending_review: 'En revisión',
+  approved: 'Aprobado',
+  exported: 'Exportado',
+  failed: 'Falló',
+}
+
+const MONTH_LABELS = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+]
+
+type Props = {
+  data: PeriodReview
+}
+
+export function PeriodReviewScreen({ data }: Props) {
+  const { building, period, tariff, rows, totals } = data
+  const tariffMarginDefault = tariff ? Number.parseFloat(tariff.margin) : 0.08
+  const [margin, setMargin] = useState<number>(
+    MARGIN_OPTIONS.includes(tariffMarginDefault as (typeof MARGIN_OPTIONS)[number])
+      ? tariffMarginDefault
+      : 0.08,
+  )
+
+  const pricePerKwh = tariff ? new Decimal(tariff.pricePerKwh) : null
+  const onePlusMargin = useMemo(() => new Decimal(1).plus(margin), [margin])
+
+  const computed = useMemo(
+    () =>
+      rows.map((r) => {
+        const kwh = r.kwh ? new Decimal(r.kwh) : null
+        const importe =
+          kwh && pricePerKwh ? roundUnitTotal(kwh.times(pricePerKwh).times(onePlusMargin)) : null
+        return { ...r, kwhDec: kwh, importeDec: importe }
+      }),
+    [rows, pricePerKwh, onePlusMargin],
+  )
+
+  const totalKwh = computed.reduce((s, r) => (r.kwhDec ? s.plus(r.kwhDec) : s), new Decimal(0))
+  const totalImporte = computed.reduce(
+    (s, r) => (r.importeDec ? s.plus(r.importeDec) : s),
+    new Decimal(0),
+  )
+
+  const periodMonthLabel = period
+    ? `${MONTH_LABELS[period.month - 1]} ${period.year}`
+    : `${MONTH_LABELS[new Date().getUTCMonth()]} ${new Date().getUTCFullYear()}`
+
+  const periodEndStr = period
+    ? new Date(period.periodEnd).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+    : null
+
+  return (
+    <div className="evk-page">
+      <div className="evk-page__head">
+        <div>
+          <p className="evk-eyebrow">
+            {building.name} · Período · {periodMonthLabel}
+          </p>
+          <h1 className="evk-h1">Revisar consumo de carga</h1>
+        </div>
+        <div className="evk-steps">
+          <span className={`evk-step ${period ? 'is-done' : ''}`}>
+            <Check size={14} strokeWidth={2.2} /> Lectura
+          </span>
+          <span className="evk-step is-current">2 · Revisión</span>
+          <span className="evk-step">3 · Importar</span>
+        </div>
+      </div>
+
+      {!period && (
+        <Card padded>
+          <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+            No hay período abierto para {periodMonthLabel}. El cierre automático se ejecuta el día 1
+            del mes siguiente. Podés revisar los dispositivos en{' '}
+            <a href="/devices" style={{ color: 'var(--text-link)' }}>
+              Dispositivos
+            </a>
+            .
+          </p>
+        </Card>
+      )}
+
+      <div className="evk-runbar">
+        <div className="evk-runbar__metrics">
+          <div>
+            <span className="evk-runbar__k">Consumo total</span>
+            <span className="evk-runbar__v evk-mono">{fmtNum(totalKwh.toNumber())} kWh</span>
+          </div>
+          <div>
+            <span className="evk-runbar__k">
+              Tarifa {tariff ? tariff.distribuidora : building.distribuidora}
+            </span>
+            <span className="evk-runbar__v evk-mono">
+              {tariff ? `${fmtMoney(Number.parseFloat(tariff.pricePerKwh))} /kWh` : 'Sin tarifa'}
+            </span>
+          </div>
+          <div className="evk-margin">
+            <span className="evk-runbar__k">Margen del consorcio</span>
+            <div className="evk-margin__ctrl">
+              {MARGIN_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`evk-chip${margin === m ? ' is-on' : ''}`}
+                  onClick={() => setMargin(m)}
+                >
+                  {Math.round(m * 100)}%
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="evk-runbar__total">
+            <span className="evk-runbar__k">Total a cobrar</span>
+            <span className="evk-runbar__v evk-runbar__big evk-mono">
+              {fmtMoney(totalImporte.toNumber())}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <Card
+        title="Detalle por unidad funcional"
+        subtitle={
+          period
+            ? `${totals.withReading} de ${totals.total} unidades con lectura válida · estado: ${STATUS_LABEL[period.status]}`
+            : `${totals.total} unidades · sin período abierto todavía`
+        }
+        action={
+          <span className="evk-formula">
+            <span className="evk-formula__pill" title="kWh × tarifa × (1 + margen)">
+              <FunctionSquare size={15} strokeWidth={1.9} /> Cómo se calcula
+            </span>
+          </span>
+        }
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              iconLeft={<Download size={17} strokeWidth={1.9} />}
+              disabled={!period || totals.withReading === 0}
+            >
+              Descargar CSV
+            </Button>
+            <Button
+              iconLeft={<CheckCircle2 size={17} strokeWidth={1.9} />}
+              disabled={!period || totals.missing > 0}
+            >
+              Aprobar e importar
+            </Button>
+            <span className="evk-foot-note">
+              {periodEndStr
+                ? `El cierre se programa el ${periodEndStr}. El software de expensas cobra vía SIRO.`
+                : 'El software de expensas se encarga del cobro vía SIRO.'}
+            </span>
+          </>
+        }
+      >
+        <div className="evk-tablewrap">
+          <table className="evk-table">
+            <thead>
+              <tr>
+                <th>UF</th>
+                <th>Dispositivo</th>
+                <th className="num">Lectura inicial</th>
+                <th className="num">Lectura final</th>
+                <th className="num">Consumo</th>
+                <th className="num">Importe</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {computed.map((d) => (
+                <tr key={d.deviceId} className={d.kwh == null ? 'is-missing' : ''}>
+                  <td className="evk-table__uf">{d.uf}</td>
+                  <td>
+                    <Tag mono icon={<Cpu size={14} strokeWidth={1.9} />}>
+                      {d.providerDeviceId}
+                    </Tag>
+                  </td>
+                  <td className="num evk-mono">
+                    {d.counterStart == null ? '—' : fmtNum(Number.parseFloat(d.counterStart))}
+                  </td>
+                  <td className="num evk-mono">
+                    {d.counterEnd == null ? '—' : fmtNum(Number.parseFloat(d.counterEnd))}
+                  </td>
+                  <td className="num evk-mono strong">
+                    {d.kwhDec == null ? '—' : fmtNum(d.kwhDec.toNumber())}
+                  </td>
+                  <td className="num evk-mono strong">
+                    {d.importeDec == null ? '—' : fmtMoney(d.importeDec.toNumber())}
+                  </td>
+                  <td>
+                    {d.kwh == null ? (
+                      <Badge tone="danger" dot>
+                        Sin lectura
+                      </Badge>
+                    ) : (
+                      <Badge tone="success" dot>
+                        Validado
+                      </Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {computed.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px 0' }}>
+                    Sin dispositivos cargados en este consorcio todavía.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {computed.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={4}>Total del período · {totals.withReading} unidades</td>
+                  <td className="num evk-mono strong">{fmtNum(totalKwh.toNumber())}</td>
+                  <td className="num evk-mono strong">{fmtMoney(totalImporte.toNumber())}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </Card>
+    </div>
+  )
+}
