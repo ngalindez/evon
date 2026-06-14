@@ -1,0 +1,49 @@
+/* Evon — Typography tokens */
+:root {
+  /* Families */
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 800;
+
+  /* Font sizes (px) */
+  --text-display: 56px;
+  --text-h1: 40px;
+  --text-h2: 32px;
+  --text-h3: 24px;
+  --text-h4: 20px;
+  --text-lg: 18px;
+  --text-base: 16px;
+  --text-sm: 14px;
+  --text-xs: 13px;
+  --text-2xs: 12px;
+
+  /* Line heights */
+  --leading-tight: 1.08;
+  --leading-snug: 1.22;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.62;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.03em;
+  --tracking-tight: -0.018em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.08em;
+
+  /* Semantic type roles */
+  --type-display: var(--weight-black) var(--text-display) / var(--leading-tight) var(--font-sans);
+  --type-h1: var(--weight-bold) var(--text-h1) / var(--leading-tight) var(--font-sans);
+  --type-h2: var(--weight-bold) var(--text-h2) / var(--leading-snug) var(--font-sans);
+  --type-h3: var(--weight-semibold) var(--text-h3) / var(--leading-snug) var(--font-sans);
+  --type-h4: var(--weight-semibold) var(--text-h4) / var(--leading-snug) var(--font-sans);
+  --type-body: var(--weight-regular) var(--text-base) / var(--leading-normal) var(--font-sans);
+  --type-body-sm: var(--weight-regular) var(--text-sm) / var(--leading-normal) var(--font-sans);
+  --type-label: var(--weight-semibold) var(--text-sm) / 1.2 var(--font-sans);
+  --type-mono: var(--weight-medium) var(--text-sm) / 1.4 var(--font-mono);
+}

@@ -4,6 +4,13 @@
 export { auth as middleware } from '@/infra/auth/config'
 
 export const config = {
-  // Protect the building-admin panel routes (the /login route is intentionally excluded).
-  matcher: ['/buildings/:path*', '/periods/:path*', '/tariffs/:path*'],
+  // Protect the building-admin panel routes (the /login and / marketing routes are intentionally excluded).
+  matcher: [
+    '/dashboard/:path*',
+    '/buildings/:path*',
+    '/periods/:path*',
+    '/tariffs/:path*',
+    '/devices/:path*',
+    '/settings/:path*',
+  ],
 }

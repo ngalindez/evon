@@ -1,0 +1,9 @@
+/* Evon — Webfonts
+   Loaded from Google Fonts (no licensed binaries shipped with this system).
+   SUBSTITUTION NOTE: If Evon licenses brand fonts, replace these @import lines
+   with local @font-face rules pointing at the binaries in assets/fonts/.
+
+   Sans (UI + display):  Hanken Grotesk  — clean humanist grotesque
+   Mono (data, kWh, $, CSV, device IDs): IBM Plex Mono
+*/
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap");

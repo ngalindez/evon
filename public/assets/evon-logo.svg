@@ -1,0 +1,7 @@
+<svg width="168" height="48" viewBox="0 0 168 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Evon">
+  <rect width="48" height="48" rx="12" fill="#0A3322"></rect>
+  <rect x="14" y="13.5" width="20" height="5" rx="2.5" fill="#B6F000"></rect>
+  <rect x="14" y="21.5" width="13" height="5" rx="2.5" fill="#FFFFFF"></rect>
+  <rect x="14" y="29.5" width="20" height="5" rx="2.5" fill="#FFFFFF" fill-opacity="0.86"></rect>
+  <text x="62" y="33" font-family="Hanken Grotesk, system-ui, sans-serif" font-size="30" font-weight="800" letter-spacing="-0.02em" fill="#0A3322">evon</text>
+</svg>

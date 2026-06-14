@@ -1,0 +1,118 @@
+/* Evon — Color tokens
+   Brand: institutional cleantech. Pine green for dark surfaces & brand,
+   a refined green for primary actions, and a disciplined "volt" lime
+   reserved STRICTLY for energy / charging / live signals.
+*/
+:root {
+  /* ---- Pine (brand dark, headers, inverse surfaces) ---- */
+  --pine-950: #04190f;
+  --pine-900: #062417;
+  --pine-800: #0a3322;
+  --pine-700: #0e4630;
+  --pine-600: #135a3e;
+
+  /* ---- Green (primary action / success) ---- */
+  --green-700: #137a3a;
+  --green-600: #15803d;
+  --green-500: #18a14b;
+  --green-400: #2fbf66;
+  --green-300: #74d99a;
+  --green-200: #b6eccb;
+  --green-100: #dcf7e6;
+  --green-50: #effcf4;
+
+  /* ---- Volt (energy / charging / live indicator ONLY) ---- */
+  --volt-600: #6fa300;
+  --volt-500: #93c90a;
+  --volt-400: #b6f000;
+  --volt-300: #cdf95a;
+  --volt-100: #eefbc4;
+
+  /* ---- Neutrals (warm-cool slate, faint green cast) ---- */
+  --neutral-0: #ffffff;
+  --neutral-50: #f7f8f7;
+  --neutral-100: #eff1f0;
+  --neutral-200: #e3e6e4;
+  --neutral-300: #ccd2cf;
+  --neutral-400: #9ba4a0;
+  --neutral-500: #6c7570;
+  --neutral-600: #4d544f;
+  --neutral-700: #363b38;
+  --neutral-800: #232825;
+  --neutral-900: #161a17;
+  --neutral-950: #0c0f0d;
+
+  /* ---- Semantic raw ---- */
+  --blue-600: #2563eb;
+  --blue-100: #dbeafe;
+  --blue-50: #eff5ff;
+  --amber-600: #c77800;
+  --amber-500: #e08c00;
+  --amber-100: #fcefc7;
+  --amber-50: #fff8ea;
+  --red-600: #d8412f;
+  --red-500: #e5533f;
+  --red-100: #fbe0da;
+  --red-50: #fef1ee;
+
+  /* =================================================================
+     SEMANTIC ALIASES — prefer these in product code
+     ================================================================= */
+
+  /* Surfaces */
+  --surface-page: var(--neutral-50);
+  --surface-card: var(--neutral-0);
+  --surface-sunken: var(--neutral-100);
+  --surface-hover: var(--neutral-100);
+  --surface-inverse: var(--pine-800);
+  --surface-inverse-2: var(--pine-900);
+  --surface-brand-soft: var(--green-50);
+
+  /* Borders */
+  --border-subtle: var(--neutral-200);
+  --border-default: var(--neutral-300);
+  --border-strong: var(--neutral-400);
+  --border-inverse: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-tertiary: var(--neutral-500);
+  --text-disabled: var(--neutral-400);
+  --text-inverse: var(--neutral-0);
+  --text-inverse-secondary: rgba(255, 255, 255, 0.66);
+  --text-brand: var(--green-700);
+  --text-link: var(--green-700);
+
+  /* Brand / interactive */
+  --brand: var(--green-600);
+  --brand-hover: var(--green-700);
+  --brand-active: #0f6b33;
+  --brand-soft: var(--green-100);
+  --brand-on: var(--neutral-0);
+  --accent-volt: var(--volt-400);
+  --accent-volt-ink: var(--pine-900);
+
+  /* Status */
+  --success: var(--green-600);
+  --success-soft: var(--green-100);
+  --success-text: var(--green-700);
+  --warning: var(--amber-600);
+  --warning-soft: var(--amber-100);
+  --warning-text: #8a5400;
+  --danger: var(--red-600);
+  --danger-soft: var(--red-100);
+  --danger-text: #a52c1e;
+  --info: var(--blue-600);
+  --info-soft: var(--blue-100);
+  --info-text: #1d4fb8;
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(24, 161, 75, 0.3);
+  --focus-ring-danger: 0 0 0 3px rgba(216, 65, 47, 0.28);
+
+  /* Data viz / charge states */
+  --charge-live: var(--volt-400);
+  --charge-idle: var(--neutral-400);
+  --charge-offline: var(--red-500);
+}
