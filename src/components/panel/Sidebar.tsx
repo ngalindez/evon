@@ -30,8 +30,11 @@ export function Sidebar() {
   return (
     <aside className="evk-sidebar">
       <div className="evk-sidebar__brand">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/evon-logo-on-dark.svg" alt="Evon" height={30} />
+        <span className="evk-sidebar__brand-lockup">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/evon-mark.png" alt="" height={32} width={32} />
+          <strong>Evon</strong>
+        </span>
       </div>
 
       <nav className="evk-nav">

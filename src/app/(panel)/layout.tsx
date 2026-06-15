@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
 import { Sidebar } from '@/components/panel/Sidebar'
 import { Topbar } from '@/components/panel/Topbar'
+import type { ReactNode } from 'react'
 
 // Topbar queries Prisma + reads cookies on every render, so the panel can't be statically
 // prerendered. Forcing dynamic at the layout level propagates to every child route — no need to
