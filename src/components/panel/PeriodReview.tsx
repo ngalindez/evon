@@ -1,4 +1,5 @@
 'use client'
+import { Alert } from '@/components/ds/Alert'
 import { Badge } from '@/components/ds/Badge'
 import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
@@ -6,7 +7,9 @@ import { Tag } from '@/components/ds/Tag'
 import { fmtMoney, fmtNum } from '@/lib/format'
 import type { PeriodReview } from '@/server/billing'
 import { Check, CheckCircle2, Cpu, Download, FunctionSquare } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
+
+type ApproveAction = (formData: FormData) => Promise<{ ok: true } | { ok: false; error: string }>
 
 const MARGIN_OPTIONS = [0, 0.05, 0.08, 0.12] as const
 
@@ -45,9 +48,12 @@ const MONTH_LABELS = [
 
 type Props = {
   data: PeriodReview
+  approveAction: ApproveAction
+  /** The calendar month the page was rendered for — needed to upsert a period if none exists. */
+  currentMonth: { year: number; month: number }
 }
 
-export function PeriodReviewScreen({ data }: Props) {
+export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props) {
   const { building, period, tariff, rows, totals } = data
   const tariffMarginDefault = tariff ? Number.parseFloat(tariff.margin) : 0.08
   const [margin, setMargin] = useState<number>(
@@ -55,6 +61,28 @@ export function PeriodReviewScreen({ data }: Props) {
       ? tariffMarginDefault
       : 0.08,
   )
+  const [isApproving, startApprove] = useTransition()
+  const [approveError, setApproveError] = useState<string | null>(null)
+  const isApproved = period?.status === 'approved' || period?.status === 'exported'
+  const canApprove = !isApproved && totals.total > 0
+  const canDownload = totals.withReading > 0 || isApproved
+
+  const csvHref = period
+    ? `/api/periods/${period.id}/csv${isApproved ? '' : `?margin=${margin}`}`
+    : null
+
+  function handleApprove() {
+    setApproveError(null)
+    const fd = new FormData()
+    fd.set('buildingId', building.id)
+    fd.set('year', String(currentMonth.year))
+    fd.set('month', String(currentMonth.month))
+    fd.set('margin', String(margin))
+    startApprove(async () => {
+      const res = await approveAction(fd)
+      if (!res.ok) setApproveError(res.error)
+    })
+  }
 
   const pricePerKwh = tariff ? Number.parseFloat(tariff.pricePerKwh) : null
 
@@ -101,14 +129,26 @@ export function PeriodReviewScreen({ data }: Props) {
       {!period && (
         <Card padded>
           <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-            No hay período abierto para {periodMonthLabel}. El cierre automático se ejecuta el día 1
-            del mes siguiente. Podés revisar los dispositivos en{' '}
+            No hay período abierto para {periodMonthLabel}. Aprobando se abre y se cierra en un solo
+            paso. También podés revisar los dispositivos en{' '}
             <a href="/devices" style={{ color: 'var(--text-link)' }}>
               Dispositivos
             </a>
             .
           </p>
         </Card>
+      )}
+
+      {approveError && (
+        <Alert tone="danger" title="No se pudo aprobar el período">
+          {approveError}
+        </Alert>
+      )}
+
+      {isApproved && (
+        <Alert tone="success" title="Período aprobado">
+          El CSV ya quedó congelado con los importes finales. Podés descargarlo abajo.
+        </Alert>
       )}
 
       <div className="evk-runbar">
@@ -163,18 +203,35 @@ export function PeriodReviewScreen({ data }: Props) {
         }
         footer={
           <>
+            {csvHref ? (
+              <a href={csvHref} download style={{ textDecoration: 'none' }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  iconLeft={<Download size={17} strokeWidth={1.9} />}
+                  disabled={!canDownload}
+                >
+                  Descargar CSV
+                </Button>
+              </a>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                iconLeft={<Download size={17} strokeWidth={1.9} />}
+                disabled
+              >
+                Descargar CSV
+              </Button>
+            )}
             <Button
-              variant="secondary"
-              iconLeft={<Download size={17} strokeWidth={1.9} />}
-              disabled={!period || totals.withReading === 0}
-            >
-              Descargar CSV
-            </Button>
-            <Button
+              type="button"
               iconLeft={<CheckCircle2 size={17} strokeWidth={1.9} />}
-              disabled={!period || totals.missing > 0}
+              disabled={!canApprove}
+              loading={isApproving}
+              onClick={handleApprove}
             >
-              Aprobar e importar
+              {isApproved ? 'Período aprobado' : 'Aprobar e importar'}
             </Button>
             <span className="evk-foot-note">
               {periodEndStr

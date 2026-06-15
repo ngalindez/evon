@@ -2,13 +2,14 @@ import { PeriodReviewScreen } from '@/components/panel/PeriodReview'
 import { getPeriodReview } from '@/server/billing'
 import { getActiveBuilding } from '@/server/catalog'
 import { Building2 } from 'lucide-react'
+import { approvePeriodAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PeriodsPage() {
   // TODO(evon): once auth is wired, replace getActiveBuilding() with the admin's selected
-  // building. "Descargar CSV" + "Aprobar" buttons in PeriodReviewScreen still need server actions
-  // (server/output for CSV, server/billing for approve).
+  // building. The CSV download route + approval action both take buildingId/year/month, so
+  // they're already auth-agnostic.
   const building = await getActiveBuilding()
 
   if (!building) {
@@ -29,6 +30,13 @@ export default async function PeriodsPage() {
     )
   }
 
-  const data = await getPeriodReview(building.id)
-  return <PeriodReviewScreen data={data} />
+  const now = new Date()
+  const data = await getPeriodReview(building.id, now)
+  return (
+    <PeriodReviewScreen
+      data={data}
+      approveAction={approvePeriodAction}
+      currentMonth={{ year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 }}
+    />
+  )
 }
