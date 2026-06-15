@@ -1,6 +1,6 @@
-import { Button } from '@/components/ds/Button'
-import { ArrowRight, FileDown, Gauge, ShieldCheck, Zap } from 'lucide-react'
-import Link from 'next/link'
+import { Button } from "@/components/ds/Button";
+import { ArrowRight, FileDown, Gauge, ShieldCheck, Zap } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -22,14 +22,17 @@ export default function HomePage() {
       <section className="evon-mkt__hero">
         <div>
           <span className="evon-mkt__pill">
-            <Zap size={13} strokeWidth={2.4} /> B2B · Administradores de consorcios
+            <Zap size={13} strokeWidth={2.4} /> B2B · Administradores de
+            consorcios
           </span>
           <p className="evon-mkt__eyebrow">Evon</p>
-          <h1 className="evon-mkt__title">El consumo de carga, en la expensa.</h1>
+          <h1 className="evon-mkt__title">
+            El consumo de carga, en la expensa.
+          </h1>
           <p className="evon-mkt__sub">
-            Evon lee los kWh del disyuntor de cada cochera, aplica la tarifa de EDESUR/EDENOR y te
-            entrega un CSV listo para importar en tu software de expensas. El vecino no hace nada.
-            Vos importás un archivo.
+            Evon lee los kWh del disyuntor de cada cochera, aplica la tarifa de
+            EDESUR/EDENOR y te entrega un CSV listo para importar en tu software
+            de expensas. El vecino no hace nada. Vos importás un archivo.
           </p>
           <div className="evon-mkt__cta">
             <Link href="/dashboard">
@@ -72,8 +75,9 @@ export default function HomePage() {
             </span>
             <h4>Lectura automática</h4>
             <p>
-              Evon se conecta al cloud del fabricante del disyuntor (Shelly, Sonoff, Tuya) y lee los
-              kWh acumulados de cada cochera el día 1 de cada mes.
+              Evon se conecta al cloud del fabricante del disyuntor (Shelly,
+              Sonoff, Tuya) y lee los kWh acumulados de cada cochera el día 1 de
+              cada mes.
             </p>
           </div>
           <div className="evon-mkt__feat">
@@ -82,18 +86,20 @@ export default function HomePage() {
             </span>
             <h4>CSV listo para importar</h4>
             <p>
-              Aplicamos la tarifa de EDESUR/EDENOR más el margen del consorcio y generamos un CSV
-              compatible con Octopus, ConsorcioAbierto o AdminProp.
+              Aplicamos la tarifa de EDESUR/EDENOR más el margen del consorcio y
+              generamos un CSV compatible con Octopus, ConsorcioAbierto o
+              AdminProp.
             </p>
           </div>
           <div className="evon-mkt__feat">
             <span className="evon-mkt__feat-ic">
               <ShieldCheck size={20} strokeWidth={1.9} />
             </span>
-            <h4>Cobranza a través de SIRO</h4>
+            <h4>Cobranza fácil</h4>
             <p>
-              El cargo aparece como una línea más en la expensa. Tu software de expensas lo cobra
-              por los canales habituales: MercadoPago, MODO, RapiPago, débito.
+              El cargo aparece como una línea más en la expensa. Tu software de
+              expensas lo cobra por los canales habituales: MercadoPago, MODO,
+              RapiPago, débito.
             </p>
           </div>
         </div>
@@ -104,5 +110,5 @@ export default function HomePage() {
         <span>piloto@evon.com.ar</span>
       </footer>
     </main>
-  )
+  );
 }

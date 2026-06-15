@@ -234,9 +234,7 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
               {isApproved ? 'Período aprobado' : 'Aprobar e importar'}
             </Button>
             <span className="evk-foot-note">
-              {periodEndStr
-                ? `El cierre se programa el ${periodEndStr}. El software de expensas cobra vía SIRO.`
-                : 'El software de expensas se encarga del cobro vía SIRO.'}
+              {periodEndStr && `El cierre se programa el ${periodEndStr}.`}
             </span>
           </>
         }
