@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="evon-mkt__nav-links">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#piloto">Piloto</a>
-          <Link href="/login">
+          <Link href="/dashboard">
             <Button variant="ghost" size="sm">
               Ingresar
             </Button>
@@ -32,7 +32,7 @@ export default function HomePage() {
             Vos importás un archivo.
           </p>
           <div className="evon-mkt__cta">
-            <Link href="/login">
+            <Link href="/dashboard">
               <Button iconRight={<ArrowRight size={17} strokeWidth={1.9} />}>
                 Probar el panel
               </Button>
