@@ -1,0 +1,545 @@
+/* Design-system component styles. Shipped via globals.css so they are present
+   on first paint (no flash of unstyled content). */
+
+/* Alert */
+.evon-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--_bd, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  background: var(--_bg, var(--surface-card));
+  padding: 14px 16px;
+  font-family: var(--font-sans);
+}
+.evon-alert__icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--_ic, var(--text-secondary));
+  margin-top: 1px;
+}
+.evon-alert__icon svg {
+  width: 20px;
+  height: 20px;
+}
+.evon-alert__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.evon-alert__title {
+  font: var(--type-label);
+  color: var(--_tc, var(--text-primary));
+}
+.evon-alert__msg {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.evon-alert--info {
+  --_bg: var(--info-soft);
+  --_bd: transparent;
+  --_ic: var(--info);
+  --_tc: var(--info-text);
+}
+.evon-alert--success {
+  --_bg: var(--success-soft);
+  --_bd: transparent;
+  --_ic: var(--success);
+  --_tc: var(--success-text);
+}
+.evon-alert--warning {
+  --_bg: var(--warning-soft);
+  --_bd: transparent;
+  --_ic: var(--warning);
+  --_tc: var(--warning-text);
+}
+.evon-alert--danger {
+  --_bg: var(--danger-soft);
+  --_bd: transparent;
+  --_ic: var(--danger);
+  --_tc: var(--danger-text);
+}
+
+/* Badge */
+.evon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.evon-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.evon-badge--neutral {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+.evon-badge--brand {
+  background: var(--brand-soft);
+  color: var(--text-brand);
+}
+.evon-badge--success {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+.evon-badge--warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+.evon-badge--danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+.evon-badge--info {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+.evon-badge--live {
+  background: var(--pine-800);
+  color: var(--volt-300);
+}
+.evon-badge--live .evon-badge__dot {
+  background: var(--volt-400);
+  box-shadow: 0 0 0 3px rgba(182, 240, 0, 0.25);
+}
+
+/* Button */
+.evon-btn {
+  --_bg: var(--brand);
+  --_fg: var(--brand-on);
+  --_bd: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  border: 1px solid var(--_bd);
+  border-radius: var(--radius-button);
+  background: var(--_bg);
+  color: var(--_fg);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition-control);
+}
+.evon-btn:active {
+  transform: translateY(1px);
+}
+.evon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.evon-btn[disabled],
+.evon-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+.evon-btn--sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+.evon-btn--md {
+  height: 40px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+.evon-btn--lg {
+  height: 48px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+}
+.evon-btn--full {
+  width: 100%;
+}
+.evon-btn--primary {
+  --_bg: var(--brand);
+  --_fg: var(--brand-on);
+}
+.evon-btn--primary:hover {
+  --_bg: var(--brand-hover);
+}
+.evon-btn--primary:active {
+  --_bg: var(--brand-active);
+}
+.evon-btn--secondary {
+  --_bg: var(--surface-card);
+  --_fg: var(--text-primary);
+  --_bd: var(--border-default);
+}
+.evon-btn--secondary:hover {
+  --_bg: var(--surface-hover);
+  --_bd: var(--border-strong);
+}
+.evon-btn--ghost {
+  --_bg: transparent;
+  --_fg: var(--text-secondary);
+  --_bd: transparent;
+}
+.evon-btn--ghost:hover {
+  --_bg: var(--surface-hover);
+  --_fg: var(--text-primary);
+}
+.evon-btn--danger {
+  --_bg: var(--danger);
+  --_fg: #fff;
+}
+.evon-btn--danger:hover {
+  --_bg: var(--danger-text);
+}
+.evon-btn--danger:focus-visible {
+  box-shadow: var(--focus-ring-danger);
+}
+.evon-btn__spinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: evon-btn-spin 0.6s linear infinite;
+}
+@keyframes evon-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evon-btn__spinner {
+    animation-duration: 1.2s;
+  }
+}
+
+/* Card */
+.evon-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+.evon-card--pad {
+  padding: var(--space-6);
+}
+.evon-card--interactive {
+  cursor: pointer;
+  transition: var(--transition-control);
+}
+.evon-card--interactive:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
+.evon-card--inverse {
+  background: var(--surface-inverse);
+  border-color: var(--border-inverse);
+  color: var(--text-inverse);
+}
+.evon-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.evon-card__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.evon-card__title {
+  font: var(--type-h4);
+  margin: 0;
+}
+.evon-card__subtitle {
+  font: var(--type-body-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+.evon-card__action {
+  margin-left: auto;
+}
+.evon-card__body {
+  padding: var(--space-6);
+}
+.evon-card__footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Input */
+.evon-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.evon-field__label {
+  font: var(--type-label);
+  color: var(--text-primary);
+}
+.evon-field__label .req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+.evon-field__hint {
+  font: var(--type-body-sm);
+  color: var(--text-tertiary);
+}
+.evon-field__error {
+  font: var(--type-body-sm);
+  color: var(--danger-text);
+}
+.evon-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-inset);
+  padding: 0 12px;
+  transition: var(--transition-control);
+}
+.evon-input-wrap:focus-within {
+  border-color: var(--brand);
+  box-shadow: var(--focus-ring);
+}
+.evon-input-wrap--error {
+  border-color: var(--danger);
+}
+.evon-input-wrap--error:focus-within {
+  box-shadow: var(--focus-ring-danger);
+}
+.evon-input-wrap--disabled {
+  background: var(--surface-sunken);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.evon-input-wrap--sm {
+  height: 36px;
+}
+.evon-input-wrap--md {
+  height: 42px;
+}
+.evon-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.evon-input::placeholder {
+  color: var(--text-disabled);
+}
+.evon-input--mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.evon-input-wrap .adorn {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+.evon-input-wrap .adorn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ProgressBar */
+.evon-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.evon-progress__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-sans);
+}
+.evon-progress__label {
+  font: var(--type-label);
+  color: var(--text-primary);
+}
+.evon-progress__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.evon-progress__track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-200);
+  overflow: hidden;
+}
+.evon-progress__track--lg {
+  height: 12px;
+}
+.evon-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width var(--duration-slow) var(--ease-out);
+  display: block;
+}
+.evon-progress__fill--volt {
+  background: var(--volt-400);
+}
+.evon-progress__fill--warning {
+  background: var(--warning);
+}
+.evon-progress__fill--danger {
+  background: var(--danger);
+}
+
+/* Stat */
+.evon-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.evon-stat__label {
+  font: var(--weight-semibold) var(--text-2xs) / 1.2 var(--font-sans);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.evon-stat__value {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-bold);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+}
+.evon-stat__value .unit {
+  font-size: 16px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+.evon-stat__value--mono {
+  font-family: var(--font-mono);
+}
+.evon-stat__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.evon-stat__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.evon-stat__delta--up {
+  color: var(--success-text);
+}
+.evon-stat__delta--down {
+  color: var(--danger-text);
+}
+.evon-stat__delta svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* StatusDot */
+.evon-statusdot {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+.evon-statusdot__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  position: relative;
+}
+.evon-statusdot__dot--online {
+  background: var(--charge-live);
+}
+.evon-statusdot__dot--idle {
+  background: var(--charge-idle);
+}
+.evon-statusdot__dot--offline {
+  background: var(--charge-offline);
+}
+.evon-statusdot--pulse .evon-statusdot__dot--online {
+  box-shadow: 0 0 0 0 rgba(182, 240, 0, 0.5);
+  animation: evon-pulse 1.8s ease-out infinite;
+}
+@keyframes evon-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(182, 240, 0, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(182, 240, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(182, 240, 0, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evon-statusdot--pulse .evon-statusdot__dot--online {
+    animation: none;
+  }
+}
+
+/* Tag */
+.evon-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-xs);
+  line-height: 1;
+  color: var(--text-secondary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.evon-tag--mono {
+  font-family: var(--font-mono);
+}
+.evon-tag svg {
+  width: 14px;
+  height: 14px;
+}
