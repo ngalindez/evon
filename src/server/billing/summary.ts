@@ -37,25 +37,31 @@ export type DashboardSummary = {
 
 export async function getDashboardSummary(
   buildingId: string,
-  now: Date = new Date(),
+  period: { year: number; month: number } = (() => {
+    const now = new Date()
+    return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 }
+  })(),
 ): Promise<DashboardSummary> {
-  const year = now.getUTCFullYear()
-  const month = now.getUTCMonth() + 1
+  const { year, month } = period
+  // For tariff effective-date + device recency we still need a real instant — use the END of
+  // the selected calendar month so a tariff effective on (or before) the period closes wins.
+  const periodEnd = new Date(Date.UTC(year, month, 1))
+  const now = new Date()
 
-  const [period, tariff, devices] = await Promise.all([
+  const [periodRow, tariff, devices] = await Promise.all([
     prisma.billingPeriod.findUnique({
       where: { buildingId_year_month: { buildingId, year, month } },
     }),
     // Tariff lookup requires the Building's distribuidora — load it via the same trip.
     prisma.building
       .findUnique({ where: { id: buildingId }, select: { distribuidora: true } })
-      .then((b) => (b ? findEffectiveTariff(b.distribuidora, now) : null)),
+      .then((b) => (b ? findEffectiveTariff(b.distribuidora, periodEnd) : null)),
     listDeviceRows(buildingId, now),
   ])
 
-  const periodReadings = period
+  const periodReadings = periodRow
     ? await prisma.meterReading.findMany({
-        where: { periodId: period.id },
+        where: { periodId: periodRow.id },
         select: { deviceId: true, kwhConsumed: true },
       })
     : []
@@ -86,7 +92,7 @@ export async function getDashboardSummary(
   }
 
   return {
-    period,
+    period: periodRow,
     tariff,
     rows,
     totals: {

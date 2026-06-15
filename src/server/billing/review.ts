@@ -84,10 +84,13 @@ function toPlainTariff(t: Tariff): PeriodReview['tariff'] {
  */
 export async function getPeriodReview(
   buildingId: string,
-  now: Date = new Date(),
+  selected: { year: number; month: number } = (() => {
+    const n = new Date()
+    return { year: n.getUTCFullYear(), month: n.getUTCMonth() + 1 }
+  })(),
 ): Promise<PeriodReview> {
-  const year = now.getUTCFullYear()
-  const month = now.getUTCMonth() + 1
+  const { year, month } = selected
+  const periodEnd = new Date(Date.UTC(year, month, 1))
 
   const building = await prisma.building.findUnique({ where: { id: buildingId } })
   if (!building) throw new Error(`Building ${buildingId} not found`)
@@ -103,7 +106,7 @@ export async function getPeriodReview(
       },
       orderBy: [{ unit: { label: 'asc' } }],
     }),
-    findEffectiveTariff(building.distribuidora, now),
+    findEffectiveTariff(building.distribuidora, periodEnd),
   ])
 
   const readingsByDevice = period

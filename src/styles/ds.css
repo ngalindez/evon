@@ -360,6 +360,33 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* Bare select + textarea — same look as Input wrap, without the wrapper component. */
+.evon-select,
+.evon-textarea {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-inset);
+  padding: 9px 12px;
+  outline: none;
+  transition: var(--transition-control);
+  width: 100%;
+}
+.evon-select:focus,
+.evon-textarea:focus {
+  border-color: var(--brand);
+  box-shadow: var(--focus-ring);
+}
+.evon-textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.5;
+}
 .evon-input-wrap .adorn {
   display: inline-flex;
   align-items: center;

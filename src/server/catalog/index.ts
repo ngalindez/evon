@@ -2,6 +2,7 @@ import type { Building, MeterReading, Provider } from '@prisma/client'
 
 import type { DeviceStatus } from '@/components/ds/StatusDot'
 import { prisma } from '@/infra/db/client'
+import { ACTIVE_BUILDING_COOKIE } from '@/server/active/constants'
 
 /**
  * Catalog: configuration browsing for the admin panel.
@@ -30,14 +31,34 @@ export function listUnits(buildingId: string) {
 /**
  * The Building currently visible in the admin panel.
  *
- * Plain English: until login + a building selector ship, the panel just picks the oldest
- * Building in the database. Returns null if the database is empty.
+ * Plain English: reads the topbar's cookie selection (`evon.activeBuildingId`). If unset or
+ * stale (id no longer exists), falls back to the oldest Building. Returns null only when the
+ * database has no Buildings at all.
  *
- * TODO(evon): replace with the authenticated admin's actively-selected building once
- * requireBuildingAdmin() and a building switcher exist (CLAUDE.md "Auth").
+ * TODO(evon): once auth ships, scope the lookup to the authenticated admin's buildings.
  */
-export function getActiveBuilding(): Promise<Building | null> {
+export async function getActiveBuilding(): Promise<Building | null> {
+  // Dynamic import keeps this file usable from non-request contexts (seed, tests).
+  const { cookies } = await import('next/headers')
+  let selectedId: string | undefined
+  try {
+    selectedId = (await cookies()).get(ACTIVE_BUILDING_COOKIE)?.value
+  } catch {
+    selectedId = undefined
+  }
+  if (selectedId) {
+    const selected = await prisma.building.findUnique({ where: { id: selectedId } })
+    if (selected) return selected
+  }
   return prisma.building.findFirst({ orderBy: { createdAt: 'asc' } })
+}
+
+/** All buildings, for the topbar building switcher. Lightweight projection. */
+export function listBuildingsForPicker() {
+  return prisma.building.findMany({
+    select: { id: true, name: true, address: true, distribuidora: true },
+    orderBy: { name: 'asc' },
+  })
 }
 
 /** A row joining a MeterDevice with its Unit, Provider and most recent Reading. */
@@ -195,5 +216,152 @@ export async function listBuildingsWithCounts() {
   }))
 }
 
-// TODO(evon): create/update of units, cloud connections and meter devices still to come — these
-// are the next CRUD surfaces after Buildings/Tariffs. See CLAUDE.md "Administrator web panel".
+// ----------------- Units -----------------
+
+export type UnitInput = {
+  label: string
+  ownerName?: string | null
+  externalRef?: string | null
+}
+
+export function getUnit(id: string) {
+  return prisma.unit.findUnique({ where: { id } })
+}
+
+export function createUnit(buildingId: string, input: UnitInput) {
+  return prisma.unit.create({
+    data: {
+      buildingId,
+      label: input.label,
+      ownerName: input.ownerName ?? null,
+      externalRef: input.externalRef ?? null,
+    },
+  })
+}
+
+export function updateUnit(id: string, input: UnitInput) {
+  return prisma.unit.update({
+    where: { id },
+    data: {
+      label: input.label,
+      ownerName: input.ownerName ?? null,
+      externalRef: input.externalRef ?? null,
+    },
+  })
+}
+
+export function deleteUnit(id: string) {
+  return prisma.unit.delete({ where: { id } })
+}
+
+export function listUnitsForBuilding(buildingId: string) {
+  return prisma.unit.findMany({
+    where: { buildingId },
+    include: { _count: { select: { meterDevices: true } } },
+    orderBy: { label: 'asc' },
+  })
+}
+
+// ----------------- Cloud connections -----------------
+
+export type CloudConnectionInput = {
+  provider: Provider
+  label?: string | null
+  /** Plaintext JSON credentials — server encrypts before persisting. Pass undefined to keep existing. */
+  credentialsPlaintext?: string
+}
+
+export function getCloudConnection(id: string) {
+  return prisma.cloudConnection.findUnique({ where: { id } })
+}
+
+export function listConnectionsForBuilding(buildingId: string) {
+  return prisma.cloudConnection.findMany({
+    where: { buildingId },
+    include: { _count: { select: { meterDevices: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+}
+
+export async function createCloudConnection(buildingId: string, input: CloudConnectionInput) {
+  const { encryptCredentials } = await import('@/infra/crypto')
+  if (!input.credentialsPlaintext) {
+    throw new Error('Las credenciales son requeridas al crear una conexión.')
+  }
+  return prisma.cloudConnection.create({
+    data: {
+      buildingId,
+      provider: input.provider,
+      label: input.label ?? null,
+      encryptedCredentials: new Uint8Array(encryptCredentials(input.credentialsPlaintext)),
+    },
+  })
+}
+
+export async function updateCloudConnection(id: string, input: CloudConnectionInput) {
+  const { encryptCredentials } = await import('@/infra/crypto')
+  if (input.credentialsPlaintext) {
+    return prisma.cloudConnection.update({
+      where: { id },
+      data: {
+        provider: input.provider,
+        label: input.label ?? null,
+        encryptedCredentials: new Uint8Array(encryptCredentials(input.credentialsPlaintext)),
+      },
+    })
+  }
+  return prisma.cloudConnection.update({
+    where: { id },
+    data: { provider: input.provider, label: input.label ?? null },
+  })
+}
+
+export function deleteCloudConnection(id: string) {
+  return prisma.cloudConnection.delete({ where: { id } })
+}
+
+// ----------------- Meter devices -----------------
+
+export type MeterDeviceInput = {
+  unitId: string
+  connectionId: string
+  providerDeviceId: string
+  label?: string | null
+}
+
+export function getMeterDevice(id: string) {
+  return prisma.meterDevice.findUnique({
+    where: { id },
+    include: {
+      unit: { select: { id: true, label: true, buildingId: true } },
+      connection: { select: { id: true, label: true, provider: true, buildingId: true } },
+    },
+  })
+}
+
+export function createMeterDevice(input: MeterDeviceInput) {
+  return prisma.meterDevice.create({
+    data: {
+      unitId: input.unitId,
+      connectionId: input.connectionId,
+      providerDeviceId: input.providerDeviceId,
+      label: input.label ?? null,
+    },
+  })
+}
+
+export function updateMeterDevice(id: string, input: MeterDeviceInput) {
+  return prisma.meterDevice.update({
+    where: { id },
+    data: {
+      unitId: input.unitId,
+      connectionId: input.connectionId,
+      providerDeviceId: input.providerDeviceId,
+      label: input.label ?? null,
+    },
+  })
+}
+
+export function deleteMeterDevice(id: string) {
+  return prisma.meterDevice.delete({ where: { id } })
+}

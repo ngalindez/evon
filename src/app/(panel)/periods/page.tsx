@@ -1,5 +1,5 @@
 import { PeriodReviewScreen } from '@/components/panel/PeriodReview'
-import { getPeriodReview } from '@/server/billing'
+import { getActivePeriod, getPeriodReview } from '@/server/billing'
 import { getActiveBuilding } from '@/server/catalog'
 import { Building2 } from 'lucide-react'
 import { approvePeriodAction } from './actions'
@@ -30,13 +30,9 @@ export default async function PeriodsPage() {
     )
   }
 
-  const now = new Date()
-  const data = await getPeriodReview(building.id, now)
+  const selected = await getActivePeriod()
+  const data = await getPeriodReview(building.id, selected)
   return (
-    <PeriodReviewScreen
-      data={data}
-      approveAction={approvePeriodAction}
-      currentMonth={{ year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 }}
-    />
+    <PeriodReviewScreen data={data} approveAction={approvePeriodAction} currentMonth={selected} />
   )
 }

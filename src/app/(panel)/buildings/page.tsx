@@ -55,8 +55,19 @@ export default async function BuildingsPage() {
                     <td>
                       <Badge tone="brand">{b.distribuidora}</Badge>
                     </td>
-                    <td className="num evk-mono">{b.unitCount}</td>
-                    <td className="num evk-mono">{b.deviceCount}</td>
+                    <td className="num evk-mono">
+                      <Link href={`/buildings/${b.id}/units`} style={{ color: 'var(--text-link)' }}>
+                        {b.unitCount}
+                      </Link>
+                    </td>
+                    <td className="num evk-mono">
+                      <Link
+                        href={`/buildings/${b.id}/connections`}
+                        style={{ color: 'var(--text-link)' }}
+                      >
+                        {b.deviceCount}
+                      </Link>
+                    </td>
                     <td>
                       <Badge tone="neutral">{b.exportProfile}</Badge>
                     </td>

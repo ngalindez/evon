@@ -1,44 +1,53 @@
-'use client'
-import {
-  Bell,
-  Building2,
-  Calendar,
-  ChevronDown,
-  ChevronsUpDown,
-  FileDown,
-  RefreshCw,
-} from 'lucide-react'
-import { Button } from '../ds/Button'
+import { Bell, FileDown, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
 
-type Props = {
-  onGenerate?: () => void
-}
+import { Button } from '@/components/ds/Button'
+import { getActivePeriod, listPeriodsForPicker } from '@/server/billing'
+import { getActiveBuilding, listBuildingsForPicker } from '@/server/catalog'
+import { BuildingPicker } from './BuildingPicker'
+import { PeriodPicker } from './PeriodPicker'
 
-export function Topbar({ onGenerate }: Props) {
+/**
+ * Topbar: building + period pickers, sync hint, primary action, notifications.
+ *
+ * Plain English: this is rendered server-side so the selected building and the period options
+ * can come straight from Prisma without an extra client fetch. The actual click handlers live
+ * inside the BuildingPicker/PeriodPicker client components.
+ */
+
+export async function Topbar() {
+  const [active, buildings] = await Promise.all([getActiveBuilding(), listBuildingsForPicker()])
+  const periodOptions = active ? await listPeriodsForPicker(active.id) : []
+  const activePeriod = await getActivePeriod()
+
   return (
     <header className="evk-topbar">
       <div className="evk-topbar__left">
-        <button type="button" className="evk-consorcio">
-          <Building2 size={18} strokeWidth={1.9} />
-          <span>Torres del Río — Av. Libertador 4820</span>
-          <ChevronsUpDown size={15} strokeWidth={1.9} />
-        </button>
+        <BuildingPicker
+          active={
+            active
+              ? {
+                  id: active.id,
+                  name: active.name,
+                  address: active.address,
+                  distribuidora: active.distribuidora,
+                }
+              : null
+          }
+          options={buildings}
+        />
         <span className="evk-topbar__divider" />
-        <button type="button" className="evk-period">
-          <Calendar size={16} strokeWidth={1.9} />
-          <span>Junio 2026</span>
-          <ChevronDown size={15} strokeWidth={1.9} />
-        </button>
+        <PeriodPicker active={activePeriod} options={periodOptions} />
       </div>
 
       <div className="evk-topbar__right">
         <span className="evk-sync">
           <RefreshCw size={15} strokeWidth={1.9} />
-          Sincronizado hace 6 min
+          Datos del piloto (seed local)
         </span>
-        <Button iconLeft={<FileDown size={17} strokeWidth={1.9} />} onClick={onGenerate}>
-          Generar archivo
-        </Button>
+        <Link href="/periods" style={{ textDecoration: 'none' }}>
+          <Button iconLeft={<FileDown size={17} strokeWidth={1.9} />}>Generar archivo</Button>
+        </Link>
         <button type="button" className="evk-iconbtn-bare" aria-label="Notificaciones">
           <Bell size={19} strokeWidth={1.9} />
           <span className="evk-dot" />

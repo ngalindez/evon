@@ -3,10 +3,13 @@ import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { StatusDot } from '@/components/ds/StatusDot'
 import { Tag } from '@/components/ds/Tag'
+import { DeleteButton } from '@/components/panel/DeleteButton'
 import { fmtNum } from '@/lib/format'
 import { getActiveBuilding, listDeviceRows } from '@/server/catalog'
 import type { Provider } from '@prisma/client'
-import { Building2, Cpu, Filter, MoreHorizontal, Plus, Search } from 'lucide-react'
+import { Building2, Cpu, Filter, Pencil, Plus, Search } from 'lucide-react'
+import Link from 'next/link'
+import { deleteDeviceAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,7 +70,9 @@ export default async function DevicesPage() {
           <p className="evk-eyebrow">{building.name}</p>
           <h1 className="evk-h1">Dispositivos</h1>
         </div>
-        <Button iconLeft={<Plus size={17} strokeWidth={1.9} />}>Agregar disyuntor</Button>
+        <Link href="/devices/new">
+          <Button iconLeft={<Plus size={17} strokeWidth={1.9} />}>Agregar disyuntor</Button>
+        </Link>
       </div>
 
       <div className="evk-toolbar">
@@ -131,10 +136,21 @@ export default async function DevicesPage() {
                       <td className="num evk-mono evk-muted">
                         {formatRelative(d.latestReading?.readAt ?? null, now)}
                       </td>
-                      <td className="num">
-                        <button type="button" className="evk-iconbtn-bare sm" aria-label="Opciones">
-                          <MoreHorizontal size={18} strokeWidth={1.9} />
-                        </button>
+                      <td style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <Link href={`/devices/${d.id}`}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            iconLeft={<Pencil size={14} strokeWidth={1.9} />}
+                          >
+                            Editar
+                          </Button>
+                        </Link>
+                        <DeleteButton
+                          action={deleteDeviceAction.bind(null, d.id)}
+                          confirmText={`Eliminar disyuntor "${d.providerDeviceId}"? Se borran sus lecturas.`}
+                        />
                       </td>
                     </tr>
                   )

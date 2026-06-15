@@ -6,7 +6,7 @@ import { ProgressBar } from '@/components/ds/ProgressBar'
 import { Stat } from '@/components/ds/Stat'
 import { StatusDot } from '@/components/ds/StatusDot'
 import { fmtMoney, fmtNum } from '@/lib/format'
-import { getDashboardSummary } from '@/server/billing'
+import { getActivePeriod, getDashboardSummary } from '@/server/billing'
 import { getActiveBuilding } from '@/server/catalog'
 import { Building2, History, Table2 } from 'lucide-react'
 import Link from 'next/link'
@@ -56,9 +56,9 @@ export default async function DashboardPage() {
     )
   }
 
-  const now = new Date()
-  const monthLabel = MONTH_NAMES[now.getUTCMonth()]
-  const summary = await getDashboardSummary(building.id, now)
+  const selectedPeriod = await getActivePeriod()
+  const monthLabel = MONTH_NAMES[selectedPeriod.month - 1]
+  const summary = await getDashboardSummary(building.id, selectedPeriod)
   const { period, tariff, rows, totals } = summary
 
   const periodEndStr = period
@@ -132,7 +132,7 @@ export default async function DashboardPage() {
         <Card
           title={
             period
-              ? `Período de ${monthLabel} ${now.getUTCFullYear()}`
+              ? `Período de ${monthLabel} ${selectedPeriod.year}`
               : `Sin período abierto para ${monthLabel}`
           }
           subtitle={`${totals.total} dispositivos · margen ${formatMarginPct(tariff?.margin ?? null)}`}
@@ -144,9 +144,11 @@ export default async function DashboardPage() {
               <Link href="/periods">
                 <Button iconLeft={<Table2 size={17} strokeWidth={1.9} />}>Revisar y generar</Button>
               </Link>
-              <Button variant="ghost" iconLeft={<History size={17} strokeWidth={1.9} />}>
-                Ver períodos anteriores
-              </Button>
+              <Link href="/periods/history">
+                <Button variant="ghost" iconLeft={<History size={17} strokeWidth={1.9} />}>
+                  Ver períodos anteriores
+                </Button>
+              </Link>
             </>
           }
         >
