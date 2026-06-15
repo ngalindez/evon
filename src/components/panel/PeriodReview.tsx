@@ -4,14 +4,20 @@ import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { Tag } from '@/components/ds/Tag'
 import { fmtMoney, fmtNum } from '@/lib/format'
-import { roundUnitTotal } from '@/lib/money'
 import type { PeriodReview } from '@/server/billing'
-import { Prisma } from '@prisma/client'
 import { Check, CheckCircle2, Cpu, Download, FunctionSquare } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 const MARGIN_OPTIONS = [0, 0.05, 0.08, 0.12] as const
-const Decimal = Prisma.Decimal
+
+/**
+ * Display-only recomputation as the user toggles the margin chip.
+ *
+ * Server-side billing uses Prisma.Decimal end-to-end (see src/lib/money.ts and
+ * src/server/billing). Here we are previewing what the totals would look like — accuracy
+ * to the cent doesn't matter, and we don't want to ship decimal.js to the browser. Number
+ * arithmetic is fine; we round to integer pesos which matches fmtMoney's display rounding.
+ */
 
 const STATUS_LABEL: Record<NonNullable<PeriodReview['period']>['status'], string> = {
   open: 'Abierto',
@@ -50,25 +56,21 @@ export function PeriodReviewScreen({ data }: Props) {
       : 0.08,
   )
 
-  const pricePerKwh = tariff ? new Decimal(tariff.pricePerKwh) : null
-  const onePlusMargin = useMemo(() => new Decimal(1).plus(margin), [margin])
+  const pricePerKwh = tariff ? Number.parseFloat(tariff.pricePerKwh) : null
 
   const computed = useMemo(
     () =>
       rows.map((r) => {
-        const kwh = r.kwh ? new Decimal(r.kwh) : null
+        const kwh = r.kwh != null ? Number.parseFloat(r.kwh) : null
         const importe =
-          kwh && pricePerKwh ? roundUnitTotal(kwh.times(pricePerKwh).times(onePlusMargin)) : null
-        return { ...r, kwhDec: kwh, importeDec: importe }
+          kwh != null && pricePerKwh != null ? Math.round(kwh * pricePerKwh * (1 + margin)) : null
+        return { ...r, kwhNum: kwh, importeNum: importe }
       }),
-    [rows, pricePerKwh, onePlusMargin],
+    [rows, pricePerKwh, margin],
   )
 
-  const totalKwh = computed.reduce((s, r) => (r.kwhDec ? s.plus(r.kwhDec) : s), new Decimal(0))
-  const totalImporte = computed.reduce(
-    (s, r) => (r.importeDec ? s.plus(r.importeDec) : s),
-    new Decimal(0),
-  )
+  const totalKwh = computed.reduce((s, r) => (r.kwhNum != null ? s + r.kwhNum : s), 0)
+  const totalImporte = computed.reduce((s, r) => (r.importeNum != null ? s + r.importeNum : s), 0)
 
   const periodMonthLabel = period
     ? `${MONTH_LABELS[period.month - 1]} ${period.year}`
@@ -113,7 +115,7 @@ export function PeriodReviewScreen({ data }: Props) {
         <div className="evk-runbar__metrics">
           <div>
             <span className="evk-runbar__k">Consumo total</span>
-            <span className="evk-runbar__v evk-mono">{fmtNum(totalKwh.toNumber())} kWh</span>
+            <span className="evk-runbar__v evk-mono">{fmtNum(totalKwh)} kWh</span>
           </div>
           <div>
             <span className="evk-runbar__k">
@@ -140,9 +142,7 @@ export function PeriodReviewScreen({ data }: Props) {
           </div>
           <div className="evk-runbar__total">
             <span className="evk-runbar__k">Total a cobrar</span>
-            <span className="evk-runbar__v evk-runbar__big evk-mono">
-              {fmtMoney(totalImporte.toNumber())}
-            </span>
+            <span className="evk-runbar__v evk-runbar__big evk-mono">{fmtMoney(totalImporte)}</span>
           </div>
         </div>
       </div>
@@ -213,10 +213,10 @@ export function PeriodReviewScreen({ data }: Props) {
                     {d.counterEnd == null ? '—' : fmtNum(Number.parseFloat(d.counterEnd))}
                   </td>
                   <td className="num evk-mono strong">
-                    {d.kwhDec == null ? '—' : fmtNum(d.kwhDec.toNumber())}
+                    {d.kwhNum == null ? '—' : fmtNum(d.kwhNum)}
                   </td>
                   <td className="num evk-mono strong">
-                    {d.importeDec == null ? '—' : fmtMoney(d.importeDec.toNumber())}
+                    {d.importeNum == null ? '—' : fmtMoney(d.importeNum)}
                   </td>
                   <td>
                     {d.kwh == null ? (
@@ -243,8 +243,8 @@ export function PeriodReviewScreen({ data }: Props) {
               <tfoot>
                 <tr>
                   <td colSpan={4}>Total del período · {totals.withReading} unidades</td>
-                  <td className="num evk-mono strong">{fmtNum(totalKwh.toNumber())}</td>
-                  <td className="num evk-mono strong">{fmtMoney(totalImporte.toNumber())}</td>
+                  <td className="num evk-mono strong">{fmtNum(totalKwh)}</td>
+                  <td className="num evk-mono strong">{fmtMoney(totalImporte)}</td>
                   <td />
                 </tr>
               </tfoot>

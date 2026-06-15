@@ -6,12 +6,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Prisma 7 moved connection-URL config out of schema and into prisma.config.ts.
+// The PrismaClient is instantiated with a driver adapter (@prisma/adapter-pg)
+// against DATABASE_URL; migrations read DIRECT_URL from prisma.config.ts.
 datasource db {
-  provider  = "postgresql"
-  // Pooled connection for queries (Neon pooled URL).
-  url       = env("DATABASE_URL")
-  // Direct connection for migrations (Neon direct URL).
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // Smart-breaker cloud provider. shelly is the only MVP implementation; tuya/ewelink are V2.

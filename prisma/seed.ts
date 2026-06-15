@@ -8,11 +8,15 @@
  * Run: `pnpm prisma db seed` (after `pnpm prisma migrate dev`).
  */
 
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
 import { encryptCredentials } from '../src/infra/crypto'
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({
+  connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+})
+const prisma = new PrismaClient({ adapter })
 
 const UNITS = [
   { label: '3.º B', providerDeviceId: 'shelly-1a2b', kwh: 148.6, agoMin: 6 },
