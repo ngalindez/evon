@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Vercel
 .vercel
+
+# Claude Code plugin artifacts (not project state)
+.claude/skills/
+.agents/
+.neon
+skills-lock.json
