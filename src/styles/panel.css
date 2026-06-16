@@ -22,24 +22,33 @@
 .evk-sidebar__brand {
   padding: 6px 8px 22px;
 }
-.evk-sidebar__brand-lockup {
+.evk-sidebar__brand-lockup,
+.evon-mkt__brand {
+  --brand-icon-size: 72px;
+  --brand-text-size: 38px;
   display: inline-flex;
   align-items: center;
-  gap: 18px;
-  color: #fff;
+  gap: 14px;
   line-height: 1;
 }
-.evk-sidebar__brand-lockup img {
-  border-radius: 50%;
+.evk-sidebar__brand-lockup {
+  color: #fff;
+}
+.evk-sidebar__brand-lockup img,
+.evon-mkt__brand img {
+  width: var(--brand-icon-size);
+  height: var(--brand-icon-size);
   display: block;
   flex: none;
 }
-.evk-sidebar__brand-lockup strong {
-  font: var(--weight-black) 32px / 1 var(--font-sans);
+.evk-sidebar__brand-lockup strong,
+.evon-mkt__brand strong {
+  height: var(--brand-icon-size);
+  display: inline-flex;
+  align-items: center;
+  font: var(--weight-black) var(--brand-text-size) / 1 var(--font-sans);
   letter-spacing: var(--tracking-tight);
-  /* Cap-height in Hanken Grotesk sits well above the line-box middle.
-     Nudge the wordmark down a touch so its optical center matches the icon's. */
-  transform: translateY(2px);
+  transform: translateY(-2px);
 }
 .evk-nav {
   display: flex;
@@ -664,18 +673,10 @@
   justify-content: space-between;
 }
 .evon-mkt__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
+  --brand-icon-size: 48px;
+  --brand-text-size: 30px;
+  gap: 12px;
   color: var(--text-primary);
-}
-.evon-mkt__brand img {
-  border-radius: 50%;
-  display: block;
-}
-.evon-mkt__brand strong {
-  font: var(--weight-black) 24px / 1 var(--font-sans);
-  letter-spacing: var(--tracking-tight);
 }
 .evon-mkt__nav-links {
   display: flex;
