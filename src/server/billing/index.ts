@@ -3,6 +3,8 @@ import { NotImplementedError } from '@/lib/errors'
 export * from './summary'
 export * from './review'
 export * from './approve'
+export * from './unapprove'
+export * from './pending-count'
 export * from './picker'
 export * from './history'
 

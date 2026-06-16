@@ -30,13 +30,12 @@ export default async function ConnectionsListPage({
     <div className="evk-page">
       <div className="evk-page__head">
         <div>
-          <p className="evk-eyebrow">
-            <Link href="/buildings" style={{ color: 'inherit', textDecoration: 'none' }}>
-              <ArrowLeft size={11} strokeWidth={2.4} style={{ verticalAlign: 'middle' }} />{' '}
+          <p className="evk-eyebrow evk-eyebrow--row">
+            <Link href="/buildings" className="evk-back-link">
+              <ArrowLeft size={12} strokeWidth={2.4} aria-hidden="true" />
               Consorcios
             </Link>
-            {' · '}
-            {building.name}
+            <span>{` · ${building.name}`}</span>
           </p>
           <h1 className="evk-h1">Conexiones al cloud</h1>
         </div>

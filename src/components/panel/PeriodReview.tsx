@@ -5,11 +5,16 @@ import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { Tag } from '@/components/ds/Tag'
 import { fmtMoney, fmtNum } from '@/lib/format'
+import { getPeriodPageTitle, getPeriodStepPhases, type StepPhase } from '@/lib/period-steps'
 import type { PeriodReview } from '@/server/billing'
-import { Check, CheckCircle2, Cpu, Download, FunctionSquare } from 'lucide-react'
-import { useMemo, useState, useTransition } from 'react'
+import type { PeriodStatus } from '@prisma/client'
+import { Check, CheckCircle2, Cpu, Download, FunctionSquare, Undo2 } from 'lucide-react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import type { PeriodMutationResult } from '@/app/(panel)/periods/actions'
+import { usePanelChrome } from '@/components/panel/PanelChromeProvider'
 
-type ApproveAction = (formData: FormData) => Promise<{ ok: true } | { ok: false; error: string }>
+type ApproveAction = (formData: FormData) => Promise<PeriodMutationResult>
+type UnapproveAction = (formData: FormData) => Promise<PeriodMutationResult>
 
 const MARGIN_OPTIONS = [0, 0.05, 0.08, 0.12] as const
 
@@ -49,12 +54,61 @@ const MONTH_LABELS = [
 type Props = {
   data: PeriodReview
   approveAction: ApproveAction
+  unapproveAction: UnapproveAction
   /** The calendar month the page was rendered for — needed to upsert a period if none exists. */
   currentMonth: { year: number; month: number }
 }
 
-export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props) {
+function stepClass(phase: StepPhase): string {
+  if (phase === 'done') return 'evk-step is-done'
+  if (phase === 'current') return 'evk-step is-current'
+  return 'evk-step'
+}
+
+function PeriodStepBar({ status }: { status: PeriodStatus | null }) {
+  const steps = getPeriodStepPhases(status ?? null)
+
+  return (
+    <div className="evk-steps">
+      <span className={stepClass(steps.lectura)}>
+        {steps.lectura === 'done' ? (
+          <>
+            <Check size={14} strokeWidth={2.2} /> Lectura
+          </>
+        ) : (
+          'Lectura'
+        )}
+      </span>
+      <span className={stepClass(steps.revision)}>
+        {steps.revision === 'done' ? (
+          <>
+            <Check size={14} strokeWidth={2.2} /> Revisión
+          </>
+        ) : (
+          '2 · Revisión'
+        )}
+      </span>
+      <span className={stepClass(steps.importar)}>
+        {steps.importar === 'done' ? (
+          <>
+            <Check size={14} strokeWidth={2.2} /> Importar
+          </>
+        ) : (
+          '3 · Importar'
+        )}
+      </span>
+    </div>
+  )
+}
+
+export function PeriodReviewScreen({ data, approveAction, unapproveAction, currentMonth }: Props) {
+  const { adjustPendingPeriodCount } = usePanelChrome()
   const { building, period, tariff, rows, totals } = data
+  const [periodStatus, setPeriodStatus] = useState<PeriodStatus | null>(period?.status ?? null)
+
+  useEffect(() => {
+    setPeriodStatus(period?.status ?? null)
+  }, [period?.status])
   const tariffMarginDefault = tariff ? Number.parseFloat(tariff.margin) : 0.08
   const [margin, setMargin] = useState<number>(
     MARGIN_OPTIONS.includes(tariffMarginDefault as (typeof MARGIN_OPTIONS)[number])
@@ -62,25 +116,54 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
       : 0.08,
   )
   const [isApproving, startApprove] = useTransition()
+  const [isUnapproving, startUnapprove] = useTransition()
   const [approveError, setApproveError] = useState<string | null>(null)
-  const isApproved = period?.status === 'approved' || period?.status === 'exported'
+  const [unapproveError, setUnapproveError] = useState<string | null>(null)
+  const isApproved = periodStatus === 'approved' || periodStatus === 'exported'
+  const isExported = periodStatus === 'exported'
+  const isLocked = isApproved
   const canApprove = !isApproved && totals.total > 0
+  const canUnapprove = periodStatus === 'approved'
   const canDownload = totals.withReading > 0 || isApproved
+  const pageTitle = getPeriodPageTitle(periodStatus)
 
   const csvHref = period
     ? `/api/periods/${period.id}/csv${isApproved ? '' : `?margin=${margin}`}`
     : null
 
-  function handleApprove() {
-    setApproveError(null)
+  function periodFormData(): FormData {
     const fd = new FormData()
     fd.set('buildingId', building.id)
     fd.set('year', String(currentMonth.year))
     fd.set('month', String(currentMonth.month))
+    return fd
+  }
+
+  function handleApprove() {
+    setApproveError(null)
+    const fd = periodFormData()
     fd.set('margin', String(margin))
     startApprove(async () => {
       const res = await approveAction(fd)
-      if (!res.ok) setApproveError(res.error)
+      if (!res.ok) {
+        setApproveError(res.error)
+        return
+      }
+      setPeriodStatus(res.periodStatus)
+      adjustPendingPeriodCount(res.pendingPeriodDelta)
+    })
+  }
+
+  function handleUnapprove() {
+    setUnapproveError(null)
+    startUnapprove(async () => {
+      const res = await unapproveAction(periodFormData())
+      if (!res.ok) {
+        setUnapproveError(res.error)
+        return
+      }
+      setPeriodStatus(res.periodStatus)
+      adjustPendingPeriodCount(res.pendingPeriodDelta)
     })
   }
 
@@ -115,15 +198,9 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
           <p className="evk-eyebrow">
             {building.name} · Período · {periodMonthLabel}
           </p>
-          <h1 className="evk-h1">Revisar consumo de carga</h1>
+          <h1 className="evk-h1">{pageTitle}</h1>
         </div>
-        <div className="evk-steps">
-          <span className={`evk-step ${period ? 'is-done' : ''}`}>
-            <Check size={14} strokeWidth={2.2} /> Lectura
-          </span>
-          <span className="evk-step is-current">2 · Revisión</span>
-          <span className="evk-step">3 · Importar</span>
-        </div>
+        <PeriodStepBar status={periodStatus} />
       </div>
 
       {!period && (
@@ -145,9 +222,22 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
         </Alert>
       )}
 
-      {isApproved && (
+      {unapproveError && (
+        <Alert tone="danger" title="No se pudo deshacer la aprobación">
+          {unapproveError}
+        </Alert>
+      )}
+
+      {periodStatus === 'approved' && (
         <Alert tone="success" title="Período aprobado">
-          El CSV ya quedó congelado con los importes finales. Podés descargarlo abajo.
+          El CSV ya quedó congelado con los importes finales. Podés descargarlo abajo o deshacer
+          la aprobación para ajustar el margen.
+        </Alert>
+      )}
+
+      {isExported && (
+        <Alert tone="success" title="Período exportado">
+          El CSV ya fue importado en tu software de expensas. Este período no se puede modificar.
         </Alert>
       )}
 
@@ -173,6 +263,7 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
                   key={m}
                   type="button"
                   className={`evk-chip${margin === m ? ' is-on' : ''}`}
+                  disabled={isLocked}
                   onClick={() => setMargin(m)}
                 >
                   {Math.round(m * 100)}%
@@ -233,6 +324,19 @@ export function PeriodReviewScreen({ data, approveAction, currentMonth }: Props)
             >
               {isApproved ? 'Período aprobado' : 'Aprobar e importar'}
             </Button>
+            {canUnapprove && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                iconLeft={<Undo2 size={17} strokeWidth={1.9} />}
+                disabled={isUnapproving}
+                loading={isUnapproving}
+                onClick={handleUnapprove}
+                aria-label="Deshacer aprobación"
+                title="Deshacer aprobación"
+              />
+            )}
             <span className="evk-foot-note">
               {periodEndStr && `El cierre se programa el ${periodEndStr}.`}
             </span>

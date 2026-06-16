@@ -11,7 +11,7 @@ async function main() {
     month: now.getUTCMonth() + 1,
     marginOverride: '0.08',
   })
-  console.log('approved:', result.status, result.approvedAt?.toISOString())
+  console.log('approved:', result.period.status, result.period.approvedAt?.toISOString())
   const lines = await prisma.billingLine.findMany({
     include: { unit: true },
     orderBy: { unit: { label: 'asc' } },

@@ -9,17 +9,17 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { usePanelChrome } from './PanelChromeProvider'
 
 type Item = {
   href: string
   label: string
   icon: typeof LayoutDashboard
-  badge?: string
 }
 
 const ITEMS: Item[] = [
   { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
-  { href: '/periods', label: 'Período actual', icon: CalendarCheck2, badge: '1' },
+  { href: '/periods', label: 'Período', icon: CalendarCheck2 },
   { href: '/devices', label: 'Dispositivos', icon: PlugZap },
   { href: '/tariffs', label: 'Tarifas y margen', icon: Percent },
   { href: '/buildings', label: 'Consorcios', icon: Building2 },
@@ -27,6 +27,7 @@ const ITEMS: Item[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { pendingPeriodCount } = usePanelChrome()
   return (
     <aside className="evk-sidebar">
       <div className="evk-sidebar__brand">
@@ -41,6 +42,10 @@ export function Sidebar() {
         {ITEMS.map((it) => {
           const active = pathname === it.href || pathname.startsWith(`${it.href}/`)
           const Icon = it.icon
+          const badge =
+            it.href === '/periods' && pendingPeriodCount > 0
+              ? String(pendingPeriodCount)
+              : undefined
           return (
             <Link
               key={it.href}
@@ -49,7 +54,7 @@ export function Sidebar() {
             >
               <Icon size={19} strokeWidth={1.9} />
               <span>{it.label}</span>
-              {it.badge && <span className="evk-nav__badge">{it.badge}</span>}
+              {badge && <span className="evk-nav__badge">{badge}</span>}
             </Link>
           )
         })}

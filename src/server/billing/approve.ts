@@ -1,3 +1,5 @@
+import type { BillingPeriod, PeriodStatus } from '@prisma/client'
+
 import { prisma } from '@/infra/db/client'
 import { ZERO, money, roundUnitTotal } from '@/lib/money'
 
@@ -34,7 +36,12 @@ export type ApproveInput = {
   marginOverride?: string
 }
 
-export async function approvePeriod(input: ApproveInput) {
+export type ApproveResult = {
+  period: BillingPeriod
+  previousStatus: PeriodStatus
+}
+
+export async function approvePeriod(input: ApproveInput): Promise<ApproveResult> {
   const { buildingId, year, month, marginOverride } = input
 
   return prisma.$transaction(async (tx) => {
@@ -53,17 +60,30 @@ export async function approvePeriod(input: ApproveInput) {
       })
     }
 
+    const previousStatus = period.status
+
     if (period.status === 'approved' || period.status === 'exported') {
       throw new ApproveError('El período ya fue aprobado')
     }
 
-    const tariff = await tx.tariff.findFirst({
-      where: {
-        distribuidora: building.distribuidora,
-        effectiveFrom: { lte: periodEnd },
-      },
-      orderBy: { effectiveFrom: 'desc' },
-    })
+    await tx.billingLine.deleteMany({ where: { periodId: period.id } })
+
+    const [tariff, units, readings, devices] = await Promise.all([
+      tx.tariff.findFirst({
+        where: {
+          distribuidora: building.distribuidora,
+          effectiveFrom: { lte: periodEnd },
+        },
+        orderBy: { effectiveFrom: 'desc' },
+      }),
+      tx.unit.findMany({ where: { buildingId }, orderBy: { label: 'asc' } }),
+      tx.meterReading.findMany({ where: { periodId: period.id } }),
+      tx.meterDevice.findMany({
+        where: { unit: { buildingId } },
+        select: { id: true, unitId: true },
+      }),
+    ])
+
     if (!tariff) {
       throw new ApproveError(`No hay tarifa vigente para ${building.distribuidora}`)
     }
@@ -73,37 +93,34 @@ export async function approvePeriod(input: ApproveInput) {
     const marginValue = money(marginRaw)
     const onePlusMargin = money(1).plus(marginValue)
 
-    // Drop any partial prior attempt so the second click is idempotent.
-    await tx.billingLine.deleteMany({ where: { periodId: period.id } })
+    const readingByDevice = new Map(readings.map((r) => [r.deviceId, r]))
+    const devicesByUnit = new Map<string, string[]>()
+    for (const device of devices) {
+      const ids = devicesByUnit.get(device.unitId) ?? []
+      ids.push(device.id)
+      devicesByUnit.set(device.unitId, ids)
+    }
 
-    const units = await tx.unit.findMany({
-      where: { buildingId },
-      include: {
-        meterDevices: {
-          include: { readings: { where: { periodId: period.id } } },
-        },
-      },
-      orderBy: { label: 'asc' },
-    })
-
-    for (const unit of units) {
-      // Sum kWh across all devices on the unit, since (rarely) a unit could have more than one.
-      const totalKwh = unit.meterDevices.reduce((sum, d) => {
-        const r = d.readings[0]
-        if (!r) return sum
-        return sum.plus(money(r.kwhConsumed.toString()))
+    const lines = units.map((unit) => {
+      const deviceIds = devicesByUnit.get(unit.id) ?? []
+      const totalKwh = deviceIds.reduce((sum, deviceId) => {
+        const reading = readingByDevice.get(deviceId)
+        if (!reading) return sum
+        return sum.plus(money(reading.kwhConsumed.toString()))
       }, ZERO)
       const amount = roundUnitTotal(totalKwh.times(price).times(onePlusMargin))
-      await tx.billingLine.create({
-        data: {
-          periodId: period.id,
-          unitId: unit.id,
-          kwh: totalKwh.toString(),
-          pricePerKwh: price.toString(),
-          amount: amount.toString(),
-          tariffId: tariff.id,
-        },
-      })
+      return {
+        periodId: period.id,
+        unitId: unit.id,
+        kwh: totalKwh.toString(),
+        pricePerKwh: price.toString(),
+        amount: amount.toString(),
+        tariffId: tariff.id,
+      }
+    })
+
+    if (lines.length > 0) {
+      await tx.billingLine.createMany({ data: lines })
     }
 
     const now = new Date()
@@ -112,6 +129,6 @@ export async function approvePeriod(input: ApproveInput) {
       data: { status: 'approved', approvedAt: now, processedAt: now },
     })
 
-    return updated
+    return { period: updated, previousStatus }
   })
 }

@@ -2,7 +2,7 @@ import { PeriodReviewScreen } from '@/components/panel/PeriodReview'
 import { getActivePeriod, getPeriodReview } from '@/server/billing'
 import { getActiveBuilding } from '@/server/catalog'
 import { Building2 } from 'lucide-react'
-import { approvePeriodAction } from './actions'
+import { approvePeriodAction, unapprovePeriodAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +33,11 @@ export default async function PeriodsPage() {
   const selected = await getActivePeriod()
   const data = await getPeriodReview(building.id, selected)
   return (
-    <PeriodReviewScreen data={data} approveAction={approvePeriodAction} currentMonth={selected} />
+    <PeriodReviewScreen
+      data={data}
+      approveAction={approvePeriodAction}
+      unapproveAction={unapprovePeriodAction}
+      currentMonth={selected}
+    />
   )
 }

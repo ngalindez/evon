@@ -2,6 +2,8 @@ import { Badge } from '@/components/ds/Badge'
 import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { DeleteButton } from '@/components/panel/DeleteButton'
+import { ClickableTableRow } from '@/components/panel/ClickableTableRow'
+import { TableActionsCell } from '@/components/panel/TableActionsCell'
 import { listBuildingsWithCounts } from '@/server/catalog'
 import { Building2, Pencil, Plus } from 'lucide-react'
 import Link from 'next/link'
@@ -49,15 +51,8 @@ export default async function BuildingsPage() {
               </thead>
               <tbody>
                 {buildings.map((b) => (
-                  <tr key={b.id}>
-                    <td className="evk-table__uf">
-                      <Link
-                        href={`/buildings/${b.id}`}
-                        style={{ color: 'var(--text-link)', textDecoration: 'none' }}
-                      >
-                        {b.name}
-                      </Link>
-                    </td>
+                  <ClickableTableRow key={b.id} href={`/buildings/${b.id}`}>
+                    <td className="evk-table__uf">{b.name}</td>
                     <td>{b.address ?? '—'}</td>
                     <td>
                       <Badge tone="brand">{b.distribuidora}</Badge>
@@ -67,12 +62,7 @@ export default async function BuildingsPage() {
                     <td>
                       <Badge tone="neutral">{b.exportProfile}</Badge>
                     </td>
-                    <td style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <Link href={`/buildings/${b.id}`}>
-                        <Button type="button" variant="secondary" size="sm">
-                          Abrir
-                        </Button>
-                      </Link>
+                    <TableActionsCell>
                       <Link href={`/buildings/${b.id}/edit`}>
                         <Button
                           type="button"
@@ -87,8 +77,8 @@ export default async function BuildingsPage() {
                         action={deleteBuildingAction.bind(null, b.id)}
                         confirmText={`Eliminar "${b.name}"? Se borran sus unidades, disyuntores y períodos.`}
                       />
-                    </td>
-                  </tr>
+                    </TableActionsCell>
+                  </ClickableTableRow>
                 ))}
               </tbody>
             </table>

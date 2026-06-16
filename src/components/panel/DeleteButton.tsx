@@ -7,6 +7,7 @@ type Props = {
   action: () => Promise<unknown>
   confirmText: string
   label?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
 /**
@@ -15,13 +16,13 @@ type Props = {
  * Plain English: click once → native confirm() dialog → if confirmed, the server action runs.
  * Keeping it minimal — a modal/dialog component isn't worth pulling in for the demo.
  */
-export function DeleteButton({ action, confirmText, label = 'Eliminar' }: Props) {
+export function DeleteButton({ action, confirmText, label = 'Eliminar', size = 'sm' }: Props) {
   const [pending, setPending] = useState(false)
   return (
     <Button
       type="button"
       variant="danger"
-      size="sm"
+      size={size}
       loading={pending}
       onClick={async () => {
         if (!confirm(confirmText)) return

@@ -1,7 +1,5 @@
-import { Bell, FileDown, RefreshCw } from 'lucide-react'
-import Link from 'next/link'
+import { Bell, RefreshCw } from 'lucide-react'
 
-import { Button } from '@/components/ds/Button'
 import { getActivePeriod, listPeriodsForPicker } from '@/server/billing'
 import { getActiveBuilding, listBuildingsForPicker } from '@/server/catalog'
 import { BuildingPicker } from './BuildingPicker'
@@ -45,9 +43,6 @@ export async function Topbar() {
           <RefreshCw size={15} strokeWidth={1.9} />
           Datos del piloto (seed local)
         </span>
-        <Link href="/periods" style={{ textDecoration: 'none' }}>
-          <Button iconLeft={<FileDown size={17} strokeWidth={1.9} />}>Generar archivo</Button>
-        </Link>
         <button type="button" className="evk-iconbtn-bare" aria-label="Notificaciones">
           <Bell size={19} strokeWidth={1.9} />
           <span className="evk-dot" />
