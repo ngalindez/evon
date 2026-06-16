@@ -32,8 +32,8 @@ export function Sidebar() {
       <div className="evk-sidebar__brand">
         <span className="evk-sidebar__brand-lockup">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/evon-mark.png" alt="" height={32} width={32} />
-          <strong>Evon</strong>
+          <img src="/assets/evon-mark.png" alt="" height={48} width={48} />
+          <strong>evon</strong>
         </span>
       </div>
 

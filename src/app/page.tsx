@@ -8,8 +8,8 @@ export default function HomePage() {
       <nav className="evon-mkt__nav">
         <span className="evon-mkt__brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/evon-mark.png" alt="" height={32} width={32} />
-          <strong>Evon</strong>
+          <img src="/assets/evon-mark.png" alt="" height={40} width={40} />
+          <strong>evon</strong>
         </span>
         <div className="evon-mkt__nav-links">
           <a href="#como-funciona">Cómo funciona</a>

@@ -25,15 +25,15 @@
 .evk-sidebar__brand-lockup {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   color: #fff;
 }
 .evk-sidebar__brand-lockup img {
-  border-radius: 8px;
+  border-radius: 50%;
   display: block;
 }
 .evk-sidebar__brand-lockup strong {
-  font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
+  font: var(--weight-black) 28px / 1 var(--font-sans);
   letter-spacing: var(--tracking-tight);
 }
 .evk-nav {
@@ -661,15 +661,15 @@
 .evon-mkt__brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   color: var(--text-primary);
 }
 .evon-mkt__brand img {
-  border-radius: 8px;
+  border-radius: 50%;
   display: block;
 }
 .evon-mkt__brand strong {
-  font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
+  font: var(--weight-black) 24px / 1 var(--font-sans);
   letter-spacing: var(--tracking-tight);
 }
 .evon-mkt__nav-links {
