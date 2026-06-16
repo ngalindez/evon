@@ -27,14 +27,19 @@
   align-items: center;
   gap: 18px;
   color: #fff;
+  line-height: 1;
 }
 .evk-sidebar__brand-lockup img {
   border-radius: 50%;
   display: block;
+  flex: none;
 }
 .evk-sidebar__brand-lockup strong {
-  font: var(--weight-black) 28px / 1 var(--font-sans);
+  font: var(--weight-black) 32px / 1 var(--font-sans);
   letter-spacing: var(--tracking-tight);
+  /* Cap-height in Hanken Grotesk sits well above the line-box middle.
+     Nudge the wordmark down a touch so its optical center matches the icon's. */
+  transform: translateY(2px);
 }
 .evk-nav {
   display: flex;
