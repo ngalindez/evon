@@ -6,7 +6,8 @@ import { RefreshCw } from 'lucide-react'
 import { useState, useTransition } from 'react'
 
 type ReseedAction = () => Promise<
-  { ok: true; units: number; readings: number } | { ok: false; error: string }
+  | { ok: true; buildings: number; units: number; periods: number; readings: number }
+  | { ok: false; error: string }
 >
 
 export function ReseedButton({ action }: { action: ReseedAction }) {
@@ -35,7 +36,7 @@ export function ReseedButton({ action }: { action: ReseedAction }) {
             if (res.ok) {
               setFeedback({
                 tone: 'success',
-                message: `Datos recargados: ${res.units} unidades, ${res.readings} lecturas.`,
+                message: `Datos recargados: ${res.buildings} consorcios, ${res.units} unidades, ${res.periods} períodos, ${res.readings} lecturas.`,
               })
             } else {
               setFeedback({ tone: 'danger', message: res.error })

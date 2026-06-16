@@ -16,7 +16,9 @@ const prisma = new PrismaClient({ adapter })
 
 async function main() {
   const summary = await seedDemoData(prisma)
-  console.log(`✓ seed complete: ${summary.units} units, ${summary.readings} readings`)
+  console.log(
+    `✓ seed complete: ${summary.buildings} buildings, ${summary.units} units, ${summary.periods} periods, ${summary.readings} readings`,
+  )
 }
 
 main()

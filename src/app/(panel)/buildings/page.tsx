@@ -50,32 +50,33 @@ export default async function BuildingsPage() {
               <tbody>
                 {buildings.map((b) => (
                   <tr key={b.id}>
-                    <td className="evk-table__uf">{b.name}</td>
+                    <td className="evk-table__uf">
+                      <Link
+                        href={`/buildings/${b.id}`}
+                        style={{ color: 'var(--text-link)', textDecoration: 'none' }}
+                      >
+                        {b.name}
+                      </Link>
+                    </td>
                     <td>{b.address ?? '—'}</td>
                     <td>
                       <Badge tone="brand">{b.distribuidora}</Badge>
                     </td>
-                    <td className="num evk-mono">
-                      <Link href={`/buildings/${b.id}/units`} style={{ color: 'var(--text-link)' }}>
-                        {b.unitCount}
-                      </Link>
-                    </td>
-                    <td className="num evk-mono">
-                      <Link
-                        href={`/buildings/${b.id}/connections`}
-                        style={{ color: 'var(--text-link)' }}
-                      >
-                        {b.deviceCount}
-                      </Link>
-                    </td>
+                    <td className="num evk-mono">{b.unitCount}</td>
+                    <td className="num evk-mono">{b.deviceCount}</td>
                     <td>
                       <Badge tone="neutral">{b.exportProfile}</Badge>
                     </td>
                     <td style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       <Link href={`/buildings/${b.id}`}>
+                        <Button type="button" variant="secondary" size="sm">
+                          Abrir
+                        </Button>
+                      </Link>
+                      <Link href={`/buildings/${b.id}/edit`}>
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           iconLeft={<Pencil size={14} strokeWidth={1.9} />}
                         >
