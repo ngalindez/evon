@@ -1,17 +1,17 @@
 'use client'
+import type { PeriodMutationResult } from '@/app/(panel)/periods/actions'
 import { Alert } from '@/components/ds/Alert'
 import { Badge } from '@/components/ds/Badge'
 import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { Tag } from '@/components/ds/Tag'
+import { usePanelChrome } from '@/components/panel/PanelChromeProvider'
 import { fmtMoney, fmtNum } from '@/lib/format'
-import { getPeriodPageTitle, getPeriodStepPhases, type StepPhase } from '@/lib/period-steps'
+import { type StepPhase, getPeriodPageTitle, getPeriodStepPhases } from '@/lib/period-steps'
 import type { PeriodReview } from '@/server/billing'
 import type { PeriodStatus } from '@prisma/client'
 import { Check, CheckCircle2, Cpu, Download, FunctionSquare, Undo2 } from 'lucide-react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import type { PeriodMutationResult } from '@/app/(panel)/periods/actions'
-import { usePanelChrome } from '@/components/panel/PanelChromeProvider'
 
 type ApproveAction = (formData: FormData) => Promise<PeriodMutationResult>
 type UnapproveAction = (formData: FormData) => Promise<PeriodMutationResult>
@@ -230,8 +230,8 @@ export function PeriodReviewScreen({ data, approveAction, unapproveAction, curre
 
       {periodStatus === 'approved' && (
         <Alert tone="success" title="Período aprobado">
-          El CSV ya quedó congelado con los importes finales. Podés descargarlo abajo o deshacer
-          la aprobación para ajustar el margen.
+          El CSV ya quedó congelado con los importes finales. Podés descargarlo abajo o deshacer la
+          aprobación para ajustar el margen.
         </Alert>
       )}
 

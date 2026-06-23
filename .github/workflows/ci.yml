@@ -86,10 +86,11 @@ jobs:
         run: pnpm prisma migrate deploy
 
       # Drift guard: compare the migrated DB against schema.prisma. Exits non-zero if they differ
-      # (i.e. someone edited the schema without committing a matching migration).
+      # (i.e. someone edited the schema without committing a matching migration). Prisma 7 removed
+      # `--from-url`; the live DB now comes from the datasource in prisma.config.ts (DIRECT_URL).
       - name: Schema drift check
         run: >-
           pnpm prisma migrate diff
-          --from-url "$DATABASE_URL"
-          --to-schema-datamodel prisma/schema.prisma
+          --from-config-datasource
+          --to-schema prisma/schema.prisma
           --exit-code

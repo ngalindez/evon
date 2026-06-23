@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertCanUnapprove, UnapproveError } from './unapprove'
+import { UnapproveError, assertCanUnapprove } from './unapprove'
 
 describe('assertCanUnapprove', () => {
   it('allows undo from approved', () => {
