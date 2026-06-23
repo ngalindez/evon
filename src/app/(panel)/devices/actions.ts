@@ -60,7 +60,8 @@ export async function updateDeviceAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
   await updateMeterDevice(id, parsed.data)
   revalidatePath('/devices')
-  redirect('/devices')
+  revalidatePath(`/devices/${id}`)
+  redirect(`/devices/${id}`)
 }
 
 /** "Leer ahora": read the device's current cumulative counter and store a sample. */

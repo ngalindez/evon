@@ -32,7 +32,7 @@ type CredField = { name: string; label: string; type?: string; placeholder?: str
 
 const CREDENTIAL_FIELDS: Record<Provider, CredField[]> = {
   tuya: [
-    { name: 'accessKey', label: 'Access Key (Client ID)', placeholder: 'fgej7g3henrstcr9w34r' },
+    { name: 'accessKey', label: 'Access Key (Client ID)', placeholder: 'your-client-id' },
     { name: 'secretKey', label: 'Secret Key (Client Secret)', type: 'password' },
   ],
   shelly: [

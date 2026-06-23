@@ -647,6 +647,40 @@
   right: 24px;
   bottom: 24px;
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+.evk-toast {
+  pointer-events: auto;
+  width: min(420px, calc(100vw - 48px));
+  box-shadow: var(--shadow-md);
+  padding-right: 44px;
+}
+.evk-toast-wrap {
+  position: relative;
+  pointer-events: auto;
+}
+.evk-toast__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.evk-toast__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
 }
 
 /* ---------- Auth (login) ---------- */

@@ -1,4 +1,4 @@
-import { Bell, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 
 import { getActivePeriod, listPeriodsForPicker } from '@/server/billing'
 import { getActiveBuilding, listBuildingsForPicker } from '@/server/catalog'
@@ -6,7 +6,7 @@ import { BuildingPicker } from './BuildingPicker'
 import { PeriodPicker } from './PeriodPicker'
 
 /**
- * Topbar: building + period pickers, sync hint, primary action, notifications.
+ * Topbar: building + period pickers, sync hint.
  *
  * Plain English: this is rendered server-side so the selected building and the period options
  * can come straight from Prisma without an extra client fetch. The actual click handlers live
@@ -43,10 +43,6 @@ export async function Topbar() {
           <RefreshCw size={15} strokeWidth={1.9} />
           Datos del piloto (seed local)
         </span>
-        <button type="button" className="evk-iconbtn-bare" aria-label="Notificaciones">
-          <Bell size={19} strokeWidth={1.9} />
-          <span className="evk-dot" />
-        </button>
       </div>
     </header>
   )

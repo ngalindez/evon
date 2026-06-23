@@ -22,13 +22,6 @@ const PROVIDER_LABEL: Record<Provider, string> = {
   ewelink: 'eWeLink',
 }
 
-const labelStyle = {
-  font: 'var(--weight-semibold) var(--text-2xs)/1.2 var(--font-sans)',
-  letterSpacing: 'var(--tracking-caps)',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-tertiary)',
-}
-
 export default async function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const device = await getMeterDevice(id)
@@ -70,8 +63,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
             <span className="evk-mono">{device.providerDeviceId}</span>
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <ReadNowButton action={triggerReadAction.bind(null, id)} />
+        <ReadNowButton action={triggerReadAction.bind(null, id)}>
           <Link href={`/devices/${id}/edit`}>
             <Button type="button" variant="secondary">
               Editar datos
@@ -83,7 +75,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
             label="Eliminar"
             size="md"
           />
-        </div>
+        </ReadNowButton>
       </div>
 
       {!latest && (
@@ -103,32 +95,37 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
 
       <div className="evk-stats">
         <Card padded>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>Unidad funcional</span>
-            <strong style={{ fontSize: 20 }}>{device.unit.label}</strong>
+          <div className="evon-stat">
+            <div className="evon-stat__label">Unidad funcional</div>
+            <div className="evon-stat__value">{device.unit.label}</div>
           </div>
         </Card>
         <Card padded>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>Fabricante</span>
-            <Badge tone="brand">{PROVIDER_LABEL[device.connection.provider]}</Badge>
+          <div className="evon-stat">
+            <div className="evon-stat__label">Fabricante</div>
+            <div className="evon-stat__value">
+              <Badge tone="brand">{PROVIDER_LABEL[device.connection.provider]}</Badge>
+            </div>
           </div>
         </Card>
         <Card padded>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>Estado</span>
-            <StatusDot status={status} pulse={status === 'online'} />
+          <div className="evon-stat">
+            <div className="evon-stat__label">Estado</div>
+            <div className="evon-stat__value">
+              <StatusDot status={status} pulse={status === 'online'} />
+            </div>
           </div>
         </Card>
         <Card padded>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={labelStyle}>Acumulado</span>
-            <strong className="evk-mono" style={{ fontSize: 26 }}>
-              {latest ? `${fmtNum(Number(latest.counterKwh), 3)} kWh` : '—'}
-            </strong>
-            <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--text-tertiary)' }}>
-              {formatRelative(latest?.readAt ?? null, now, 'sin lecturas')}
-            </span>
+          <div className="evon-stat">
+            <div className="evon-stat__label">Acumulado</div>
+            <div className="evon-stat__value evon-stat__value--mono">
+              {latest ? fmtNum(Number(latest.counterKwh), 3) : '—'}
+              {latest && <span className="unit">kWh</span>}
+            </div>
+            <div className="evon-stat__foot">
+              <span>{formatRelative(latest?.readAt ?? null, now, 'sin lecturas')}</span>
+            </div>
           </div>
         </Card>
       </div>
