@@ -1,4 +1,9 @@
-import type { ConsumptionWindow, DeviceConsumption, ProviderDevice } from '@/lib/types'
+import type {
+  ConsumptionWindow,
+  CounterReading,
+  DeviceConsumption,
+  ProviderDevice,
+} from '@/lib/types'
 
 /**
  * The common interface every smart-breaker cloud integration implements.
@@ -19,6 +24,15 @@ export interface MeterConnector {
    * Returns the raw payload too, for traceability.
    */
   getConsumption(providerDeviceId: string, window: ConsumptionWindow): Promise<DeviceConsumption>
+
+  /**
+   * Read the device's current cumulative counter "now" (kWh lifetime total).
+   *
+   * This is the read behind a MeterSample: on-demand reads, the setup baseline, and the daily
+   * poll cron all call this. Period consumption is the delta between two snapshots, computed by
+   * the metering layer — the connector stays a dumb counter reader.
+   */
+  readCounter(providerDeviceId: string): Promise<CounterReading>
 }
 
 /** Decrypted credentials handed to a connector. Shape is provider-specific (parsed JSON). */

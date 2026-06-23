@@ -36,3 +36,18 @@ export interface DeviceConsumption {
   readAt: Date
   raw: unknown
 }
+
+/**
+ * A single cumulative-counter snapshot for a device, taken "now".
+ *
+ * This is the point-in-time read behind a MeterSample. The counter is a monotonic lifetime
+ * total (kWh); period consumption is the delta between two of these. Carried as a decimal
+ * string so no precision is lost before it becomes a Prisma.Decimal.
+ */
+export interface CounterReading {
+  /** Cumulative lifetime counter as a decimal string (kWh). */
+  counterKwh: string
+  /** When the snapshot was taken. */
+  readAt: Date
+  raw: unknown
+}

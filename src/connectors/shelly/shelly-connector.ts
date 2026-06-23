@@ -1,5 +1,10 @@
 import type { ConnectorCredentials, MeterConnector } from '@/connectors/meter-connector'
-import type { ConsumptionWindow, DeviceConsumption, ProviderDevice } from '@/lib/types'
+import type {
+  ConsumptionWindow,
+  CounterReading,
+  DeviceConsumption,
+  ProviderDevice,
+} from '@/lib/types'
 
 /**
  * Reads kWh from the Shelly cloud. Shelly is the MVP target connector (CLAUDE.md "MVP scope"):
@@ -28,5 +33,10 @@ export class ShellyConnector implements MeterConnector {
     // baseline reading at period start, fill counterStart/counterEnd) or interval consumption
     // (kwh directly)? Confirm against a physical device — see CLAUDE.md "Shelly API shape".
     throw new Error('TODO(evon): ShellyConnector.getConsumption')
+  }
+
+  async readCounter(_providerDeviceId: string): Promise<CounterReading> {
+    // TODO(evon): read the Shelly cumulative energy counter — see CLAUDE.md "Shelly API shape".
+    throw new Error('TODO(evon): ShellyConnector.readCounter')
   }
 }

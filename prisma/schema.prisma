@@ -136,6 +136,7 @@ model MeterDevice {
   label            String?
 
   readings MeterReading[]
+  samples  MeterSample[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -221,6 +222,29 @@ model MeterReading {
   @@unique([periodId, deviceId])
   @@index([deviceId])
   @@map("meter_readings")
+}
+
+// Sample: a single cumulative-counter snapshot for one device at a point in time.
+//
+// The raw time series behind the per-period MeterReading. Written by on-demand reads ("Leer
+// ahora"), the auto-read at device setup (the baseline), and the daily poll cron. Period
+// consumption and the device usage graph are both derived from deltas between samples.
+model MeterSample {
+  id       String      @id @default(cuid())
+  deviceId String      @map("device_id")
+  device   MeterDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  // Cumulative lifetime counter as kWh (e.g. Tuya total_forward_energy / 100). Monotonic except
+  // on a device-side counter reset — delta math clamps that case.
+  counterKwh Decimal @map("counter_kwh") @db.Decimal(14, 3)
+  // The cloud's raw response, verbatim, for traceability.
+  rawPayload Json     @map("raw_payload")
+  readAt     DateTime @map("read_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([deviceId, readAt])
+  @@map("meter_samples")
 }
 
 // Billing line: the per-unit charge produced for a period (one per unit, including units at $0).
