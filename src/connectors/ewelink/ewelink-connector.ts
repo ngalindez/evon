@@ -1,6 +1,11 @@
 import type { ConnectorCredentials, MeterConnector } from '@/connectors/meter-connector'
 import { NotImplementedError } from '@/lib/errors'
-import type { ConsumptionWindow, DeviceConsumption, ProviderDevice } from '@/lib/types'
+import type {
+  ConsumptionWindow,
+  CounterReading,
+  DeviceConsumption,
+  ProviderDevice,
+} from '@/lib/types'
 
 /**
  * eWeLink cloud connector.
@@ -21,6 +26,10 @@ export class EwelinkConnector implements MeterConnector {
     _providerDeviceId: string,
     _window: ConsumptionWindow,
   ): Promise<DeviceConsumption> {
+    throw new NotImplementedError('EwelinkConnector')
+  }
+
+  async readCounter(_providerDeviceId: string): Promise<CounterReading> {
     throw new NotImplementedError('EwelinkConnector')
   }
 }

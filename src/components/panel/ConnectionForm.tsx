@@ -35,14 +35,33 @@ const SAMPLE_PLACEHOLDERS: Record<Provider, string> = {
 export function ConnectionForm({ initial, action, submitLabel, buildingId, mode }: Props) {
   const [pending, setPending] = useState(false)
   const [provider, setProvider] = useState<Provider>(initial?.provider ?? 'shelly')
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <Card padded>
+      {error && (
+        <div
+          style={{
+            background: 'var(--danger-soft)',
+            color: 'var(--danger-text)',
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-sm)',
+            marginBottom: 18,
+          }}
+        >
+          {error}
+        </div>
+      )}
       <form
         action={async (fd) => {
+          setError(null)
           setPending(true)
           try {
-            await action(fd)
+            const res = (await action(fd)) as { ok?: boolean; error?: string } | undefined
+            if (res && res.ok === false) {
+              setError(res.error ?? 'No se pudo guardar la conexión')
+            }
           } finally {
             setPending(false)
           }

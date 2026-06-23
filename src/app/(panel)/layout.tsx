@@ -1,7 +1,7 @@
-import { countPeriodsPendingReview } from '@/server/billing'
 import { PanelChromeProvider } from '@/components/panel/PanelChromeProvider'
 import { Sidebar } from '@/components/panel/Sidebar'
 import { Topbar } from '@/components/panel/Topbar'
+import { countPeriodsPendingReview } from '@/server/billing'
 import type { ReactNode } from 'react'
 
 // Topbar queries Prisma + reads cookies on every render, so the panel can't be statically

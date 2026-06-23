@@ -47,7 +47,11 @@ export async function createConnectionAction(
   const parsed = createSchema.safeParse(parseFromForm(formData))
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
-  await createCloudConnection(buildingId, parsed.data)
+  try {
+    await createCloudConnection(buildingId, parsed.data)
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'No se pudo crear la conexión' }
+  }
   revalidatePath(`/buildings/${buildingId}/connections`)
   revalidatePath('/buildings')
   redirect(`/buildings/${buildingId}/connections`)
@@ -62,7 +66,14 @@ export async function updateConnectionAction(
   const parsed = baseSchema.safeParse(parseFromForm(formData))
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
-  await updateCloudConnection(connectionId, parsed.data)
+  try {
+    await updateCloudConnection(connectionId, parsed.data)
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'No se pudo actualizar la conexión',
+    }
+  }
   revalidatePath(`/buildings/${buildingId}/connections`)
   redirect(`/buildings/${buildingId}/connections`)
 }

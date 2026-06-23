@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
+import { logger } from '@/infra/observability/logger'
 import { createMeterDevice, deleteMeterDevice, updateMeterDevice } from '@/server/catalog'
+import { readDeviceCounter } from '@/server/metering'
 
 const deviceSchema = z.object({
   unitId: z.string().min(1, 'Seleccioná una unidad'),
@@ -33,10 +35,20 @@ export async function createDeviceAction(formData: FormData): Promise<DeviceActi
   const parsed = parse(formData)
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
-  await createMeterDevice(parsed.data)
+  const device = await createMeterDevice(parsed.data)
+  // Best-effort baseline read. Never blocks creation: a wrong device id / offline breaker just
+  // leaves the device with no reading, and the detail page shows a "read failed, retry" hint.
+  try {
+    await readDeviceCounter(device.id)
+  } catch (err) {
+    logger.warn('baseline read failed on device create', {
+      deviceId: device.id,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
   revalidatePath('/devices')
   revalidatePath('/dashboard')
-  redirect('/devices')
+  redirect(`/devices/${device.id}`)
 }
 
 export async function updateDeviceAction(
@@ -49,6 +61,21 @@ export async function updateDeviceAction(
   await updateMeterDevice(id, parsed.data)
   revalidatePath('/devices')
   redirect('/devices')
+}
+
+/** "Leer ahora": read the device's current cumulative counter and store a sample. */
+export async function triggerReadAction(id: string): Promise<DeviceActionResult> {
+  try {
+    await readDeviceCounter(id)
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'No se pudo leer el dispositivo',
+    }
+  }
+  revalidatePath(`/devices/${id}`)
+  revalidatePath('/devices')
+  return { ok: true }
 }
 
 export async function deleteDeviceAction(id: string): Promise<void> {

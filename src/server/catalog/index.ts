@@ -1,4 +1,4 @@
-import type { Building, MeterReading, Provider } from '@prisma/client'
+import type { Building, Provider } from '@prisma/client'
 
 import type { DeviceStatus } from '@/components/ds/StatusDot'
 import { prisma } from '@/infra/db/client'
@@ -61,7 +61,7 @@ export function listBuildingsForPicker() {
   })
 }
 
-/** A row joining a MeterDevice with its Unit, Provider and most recent Reading. */
+/** A row joining a MeterDevice with its Unit, Provider and most recent counter sample. */
 export type DeviceRow = {
   /** MeterDevice id. */
   id: string
@@ -71,27 +71,28 @@ export type DeviceRow = {
   providerDeviceId: string
   provider: Provider
   status: DeviceStatus
-  /** Latest persisted Reading, if any. */
-  latestReading: MeterReading | null
+  /** Latest cumulative counter (kWh) as a string, or null if never read. */
+  lastCounterKwh: string | null
+  /** When the latest sample was taken, or null. */
+  lastReadAt: Date | null
 }
 
 /**
- * Derive a coarse on/idle/offline state from the latest reading recency.
+ * Derive a coarse on/idle/offline state from the latest sample recency.
  *
- * No "live ping" channel exists — the schema only knows about persisted Readings — so we treat
- * a device with a sub-24h reading as online, 1-7d as idle, and anything older (or never read)
- * as offline. This is good enough for the dashboard's status dots.
+ * No "live ping" channel exists — we only know about persisted samples — so we treat a device
+ * with a sub-24h sample as online, 1-7d as idle, and anything older (or never read) as offline.
  */
-function deriveStatus(reading: MeterReading | null, now: Date): DeviceStatus {
-  if (!reading) return 'offline'
-  const ageMs = now.getTime() - reading.readAt.getTime()
+export function deriveStatus(readAt: Date | null, now: Date): DeviceStatus {
+  if (!readAt) return 'offline'
+  const ageMs = now.getTime() - readAt.getTime()
   const day = 24 * 60 * 60 * 1000
   if (ageMs < day) return 'online'
   if (ageMs < 7 * day) return 'idle'
   return 'offline'
 }
 
-/** All MeterDevices in a Building, decorated with Unit, Provider, and latest Reading. */
+/** All MeterDevices in a Building, decorated with Unit, Provider, and latest counter sample. */
 export async function listDeviceRows(
   buildingId: string,
   now: Date = new Date(),
@@ -101,20 +102,21 @@ export async function listDeviceRows(
     include: {
       unit: { select: { label: true } },
       connection: { select: { provider: true } },
-      readings: { orderBy: { readAt: 'desc' }, take: 1 },
+      samples: { orderBy: { readAt: 'desc' }, take: 1 },
     },
     orderBy: [{ unit: { label: 'asc' } }],
   })
 
   return devices.map((d) => {
-    const latestReading = d.readings[0] ?? null
+    const latest = d.samples[0] ?? null
     return {
       id: d.id,
       uf: d.unit.label,
       providerDeviceId: d.providerDeviceId,
       provider: d.connection.provider,
-      status: deriveStatus(latestReading, now),
-      latestReading,
+      status: deriveStatus(latest?.readAt ?? null, now),
+      lastCounterKwh: latest ? latest.counterKwh.toString() : null,
+      lastReadAt: latest?.readAt ?? null,
     }
   })
 }
@@ -288,6 +290,8 @@ export async function createCloudConnection(buildingId: string, input: CloudConn
   if (!input.credentialsPlaintext) {
     throw new Error('Las credenciales son requeridas al crear una conexión.')
   }
+  const { verifyConnectionCredentials } = await import('@/server/metering')
+  await verifyConnectionCredentials(input.provider, input.credentialsPlaintext)
   return prisma.cloudConnection.create({
     data: {
       buildingId,
@@ -301,6 +305,8 @@ export async function createCloudConnection(buildingId: string, input: CloudConn
 export async function updateCloudConnection(id: string, input: CloudConnectionInput) {
   const { encryptCredentials } = await import('@/infra/crypto')
   if (input.credentialsPlaintext) {
+    const { verifyConnectionCredentials } = await import('@/server/metering')
+    await verifyConnectionCredentials(input.provider, input.credentialsPlaintext)
     return prisma.cloudConnection.update({
       where: { id },
       data: {
