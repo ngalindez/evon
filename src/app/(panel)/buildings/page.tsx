@@ -2,12 +2,9 @@ import { Badge } from '@/components/ds/Badge'
 import { Button } from '@/components/ds/Button'
 import { Card } from '@/components/ds/Card'
 import { ClickableTableRow } from '@/components/panel/ClickableTableRow'
-import { DeleteButton } from '@/components/panel/DeleteButton'
-import { TableActionsCell } from '@/components/panel/TableActionsCell'
 import { listBuildingsWithCounts } from '@/server/catalog'
-import { Building2, Pencil, Plus } from 'lucide-react'
+import { Building2, Plus } from 'lucide-react'
 import Link from 'next/link'
-import { deleteBuildingAction } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +43,6 @@ export default async function BuildingsPage() {
                   <th className="num">Unidades</th>
                   <th className="num">Dispositivos</th>
                   <th>Perfil CSV</th>
-                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -62,22 +58,6 @@ export default async function BuildingsPage() {
                     <td>
                       <Badge tone="neutral">{b.exportProfile}</Badge>
                     </td>
-                    <TableActionsCell>
-                      <Link href={`/buildings/${b.id}/edit`}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          iconLeft={<Pencil size={14} strokeWidth={1.9} />}
-                        >
-                          Editar
-                        </Button>
-                      </Link>
-                      <DeleteButton
-                        action={deleteBuildingAction.bind(null, b.id)}
-                        confirmText={`Eliminar "${b.name}"? Se borran sus unidades, disyuntores y períodos.`}
-                      />
-                    </TableActionsCell>
                   </ClickableTableRow>
                 ))}
               </tbody>

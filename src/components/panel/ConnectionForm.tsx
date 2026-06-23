@@ -26,15 +26,29 @@ const PROVIDERS: Array<{ value: Provider; label: string }> = [
   { value: 'ewelink', label: 'eWeLink' },
 ]
 
-const SAMPLE_PLACEHOLDERS: Record<Provider, string> = {
-  shelly: '{"email": "admin@evon.com.ar", "token": "..."}',
-  tuya: '{"accessKey": "...", "secretKey": "..."}',
-  ewelink: '{"email": "...", "password": "..."}',
+// Credential fields per provider. The form assembles these into the JSON the server expects
+// (credentialsPlaintext), so the server/encryption contract is unchanged.
+type CredField = { name: string; label: string; type?: string; placeholder?: string }
+
+const CREDENTIAL_FIELDS: Record<Provider, CredField[]> = {
+  tuya: [
+    { name: 'accessKey', label: 'Access Key (Client ID)', placeholder: 'fgej7g3henrstcr9w34r' },
+    { name: 'secretKey', label: 'Secret Key (Client Secret)', type: 'password' },
+  ],
+  shelly: [
+    { name: 'email', label: 'Email', placeholder: 'admin@evon.com.ar' },
+    { name: 'token', label: 'Token', type: 'password' },
+  ],
+  ewelink: [
+    { name: 'email', label: 'Email', placeholder: 'admin@evon.com.ar' },
+    { name: 'password', label: 'Contraseña', type: 'password' },
+  ],
 }
 
 export function ConnectionForm({ initial, action, submitLabel, buildingId, mode }: Props) {
   const [pending, setPending] = useState(false)
-  const [provider, setProvider] = useState<Provider>(initial?.provider ?? 'shelly')
+  // Empty until a provider is chosen (so the credential fields stay hidden on a fresh create).
+  const [provider, setProvider] = useState<Provider | ''>(initial?.provider ?? '')
   const [error, setError] = useState<string | null>(null)
 
   return (
@@ -56,6 +70,18 @@ export function ConnectionForm({ initial, action, submitLabel, buildingId, mode 
       <form
         action={async (fd) => {
           setError(null)
+          // Assemble the per-provider fields into the credentialsPlaintext JSON the server reads.
+          // In edit mode, all-blank means "keep the existing credentials" (we never decrypt to
+          // prefill), so we only set credentialsPlaintext when at least one field is filled.
+          const creds: Record<string, string> = {}
+          let anyFilled = false
+          for (const f of provider ? CREDENTIAL_FIELDS[provider] : []) {
+            const v = (fd.get(`cred_${f.name}`)?.toString() ?? '').trim()
+            if (v) anyFilled = true
+            creds[f.name] = v
+            fd.delete(`cred_${f.name}`)
+          }
+          if (anyFilled) fd.set('credentialsPlaintext', JSON.stringify(creds))
           setPending(true)
           try {
             const res = (await action(fd)) as { ok?: boolean; error?: string } | undefined
@@ -66,6 +92,7 @@ export function ConnectionForm({ initial, action, submitLabel, buildingId, mode 
             setPending(false)
           }
         }}
+        autoComplete="off"
         style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div className="evon-field">
@@ -75,10 +102,14 @@ export function ConnectionForm({ initial, action, submitLabel, buildingId, mode 
           <select
             id="provider"
             name="provider"
-            defaultValue={provider}
-            onChange={(e) => setProvider(e.target.value as Provider)}
+            value={provider}
+            onChange={(e) => setProvider(e.target.value as Provider | '')}
             className="evon-select"
+            required
           >
+            <option value="" disabled>
+              Seleccioná un fabricante…
+            </option>
             {PROVIDERS.map((p) => (
               <option key={p.value} value={p.value}>
                 {p.label}
@@ -94,23 +125,33 @@ export function ConnectionForm({ initial, action, submitLabel, buildingId, mode 
           placeholder="p. ej. 'Shelly Cloud — Torres del Río'"
         />
 
-        <div className="evon-field">
-          <label className="evon-field__label" htmlFor="credentialsPlaintext">
-            Credenciales del cloud {mode === 'create' && <span className="req">*</span>}
-          </label>
-          <textarea
-            id="credentialsPlaintext"
-            name="credentialsPlaintext"
-            placeholder={SAMPLE_PLACEHOLDERS[provider]}
-            rows={5}
-            className="evon-textarea"
-            required={mode === 'create'}
-          />
-          <span className="evon-field__hint">
-            JSON con la credencial del fabricante. Se encripta con AES-256-GCM antes de guardarse.{' '}
-            {mode === 'edit' && 'Dejá vacío para mantener la actual.'}
-          </span>
-        </div>
+        {provider && (
+          <div className="evon-field" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <span className="evon-field__label">
+              Credenciales del cloud {mode === 'create' && <span className="req">*</span>}
+            </span>
+            {CREDENTIAL_FIELDS[provider].map((f) => (
+              <Input
+                key={`${provider}-${f.name}`}
+                name={`cred_${f.name}`}
+                label={f.label}
+                type={f.type ?? 'text'}
+                placeholder={f.placeholder}
+                required={mode === 'create'}
+                // Chrome ignores autoComplete="off" next to a password field (looks like a login);
+                // "new-password" on secrets suppresses the saved-login dropdown. data-* opt out of
+                // 1Password / LastPass.
+                autoComplete={f.type === 'password' ? 'new-password' : 'off'}
+                data-1p-ignore=""
+                data-lpignore="true"
+              />
+            ))}
+            <span className="evon-field__hint">
+              Se encripta con AES-256-GCM antes de guardarse.{' '}
+              {mode === 'edit' && 'Dejá los campos vacíos para mantener las credenciales actuales.'}
+            </span>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
           <Button type="submit" loading={pending}>

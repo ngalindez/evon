@@ -27,7 +27,17 @@ export default async function EditDevicePage({ params }: { params: Promise<{ id:
       <div className="evk-page__head">
         <div>
           <p className="evk-eyebrow">{activeBuilding?.name ?? 'Consorcio'} · Dispositivos</p>
-          <h1 className="evk-h1">Editar {device.providerDeviceId}</h1>
+          <h1 className="evk-h1">Editar dispositivo</h1>
+          <p
+            style={{
+              margin: '6px 0 0',
+              color: 'var(--text-secondary)',
+              fontSize: 'var(--text-sm)',
+            }}
+          >
+            {device.label ? `${device.label} · ` : ''}
+            <span className="evk-mono">{device.providerDeviceId}</span>
+          </p>
         </div>
       </div>
       <DeviceForm
